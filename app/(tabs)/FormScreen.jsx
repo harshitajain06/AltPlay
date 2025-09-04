@@ -1,21 +1,104 @@
-import React, { useState } from "react";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import * as ImagePicker from "expo-image-picker";
+import { addDoc, collection } from "firebase/firestore";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import React, { useEffect, useState } from "react";
+import { useAuthState } from "react-firebase-hooks/auth";
 import {
-  View,
+  ActivityIndicator,
+  FlatList,
+  Image,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,
-  Image,
-  StyleSheet,
+  View,
 } from "react-native";
-import * as ImagePicker from "expo-image-picker";
-import DateTimePicker from "@react-native-community/datetimepicker";
-import { db, storage } from "../../config/firebase";
-import { collection, addDoc } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { auth, db, storage } from "../../config/firebase";
+
+// Dropdown data
+const GENDER_OPTIONS = ['Male', 'Female', 'Other'];
+const NATIONALITY_OPTIONS = [
+  'India', 'Brazil', 'Argentina', 'Germany', 'France', 'Spain', 'Italy', 'England',
+  'Portugal', 'Netherlands', 'Belgium', 'Croatia', 'Uruguay', 'Colombia', 'Mexico',
+  'USA', 'Canada', 'Australia', 'Japan', 'South Korea', 'China', 'Nigeria', 'Ghana',
+  'Egypt', 'Morocco', 'South Africa', 'Other'
+];
+const POSITION_OPTIONS = [
+  'Goalkeeper', 'Defender', 'Center Back', 'Left Back', 'Right Back',
+  'Midfielder', 'Defensive Midfielder', 'Central Midfielder', 'Attacking Midfielder',
+  'Left Midfielder', 'Right Midfielder', 'Winger', 'Forward', 'Striker',
+  'Left Winger', 'Right Winger', 'Second Striker'
+];
+const EXPERIENCE_OPTIONS = [
+  '0-2 years', '3-5 years', '6-10 years', '11-15 years', '16-20 years', '20+ years'
+];
+
+// Custom Dropdown Component
+const CustomDropdown = ({ options, selectedValue, onSelect, placeholder, style }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <View style={style}>
+      <TouchableOpacity
+        style={[styles.input, styles.dropdownButton]}
+        onPress={() => setIsOpen(true)}
+      >
+        <Text style={[styles.dropdownText, !selectedValue && styles.placeholderText]}>
+          {selectedValue || placeholder}
+        </Text>
+        <Text style={styles.dropdownArrow}>▼</Text>
+      </TouchableOpacity>
+
+      <Modal
+        visible={isOpen}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsOpen(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setIsOpen(false)}
+        >
+          <View style={styles.dropdownModal}>
+            <FlatList
+              data={options}
+              keyExtractor={(item) => item}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.dropdownItem,
+                    selectedValue === item && styles.selectedDropdownItem
+                  ]}
+                  onPress={() => {
+                    onSelect(item);
+                    setIsOpen(false);
+                  }}
+                >
+                  <Text style={[
+                    styles.dropdownItemText,
+                    selectedValue === item && styles.selectedDropdownItemText
+                  ]}>
+                    {item}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </View>
+  );
+};
 
 const PlayerForm = () => {
+  const [user, loading, error] = useAuthState(auth);
   const [step, setStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({
     fullName: "",
     dob: new Date(),
@@ -34,6 +117,16 @@ const PlayerForm = () => {
     experience: "",
     jerseyNumber: "",
   });
+
+  // Auto-populate email from authenticated user
+  useEffect(() => {
+    if (user && user.email) {
+      setForm(prevForm => ({
+        ...prevForm,
+        email: user.email
+      }));
+    }
+  }, [user]);
 
   const pickImage = async (field) => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -68,6 +161,7 @@ const uploadFile = async (uri, path) => {
 
 
   const handleSubmit = async () => {
+    setIsSubmitting(true);
     try {
       let photoURL = null;
       if (form.profilePhoto) {
@@ -88,6 +182,8 @@ const uploadFile = async (uri, path) => {
       console.error(error);
       alert("⚠️ Error saving data");
       console.log(error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -113,11 +209,12 @@ const uploadFile = async (uri, path) => {
             onChange={(e, date) => setForm({ ...form, dob: date })}
           />
 
-          <TextInput
-            style={styles.input}
-            placeholder="Nationality"
-            value={form.nationality}
-            onChangeText={(t) => setForm({ ...form, nationality: t })}
+          <CustomDropdown
+            options={NATIONALITY_OPTIONS}
+            selectedValue={form.nationality}
+            onSelect={(value) => setForm({ ...form, nationality: value })}
+            placeholder="Select Nationality"
+            style={{ marginBottom: 12 }}
           />
 
           <TextInput
@@ -135,19 +232,22 @@ const uploadFile = async (uri, path) => {
             onChangeText={(t) => setForm({ ...form, phone: t })}
           />
 
+          <Text style={styles.label}>Email (from your account)</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, styles.readOnlyInput]}
             placeholder="Email"
             keyboardType="email-address"
             value={form.email}
-            onChangeText={(t) => setForm({ ...form, email: t })}
+            editable={false}
+            selectTextOnFocus={false}
           />
 
-          <TextInput
-            style={styles.input}
-            placeholder="Gender"
-            value={form.gender}
-            onChangeText={(t) => setForm({ ...form, gender: t })}
+          <CustomDropdown
+            options={GENDER_OPTIONS}
+            selectedValue={form.gender}
+            onSelect={(value) => setForm({ ...form, gender: value })}
+            placeholder="Select Gender"
+            style={{ marginBottom: 12 }}
           />
 
           <TouchableOpacity
@@ -174,18 +274,20 @@ const uploadFile = async (uri, path) => {
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Playing Details</Text>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Primary Position"
-            value={form.primaryPosition}
-            onChangeText={(t) => setForm({ ...form, primaryPosition: t })}
+          <CustomDropdown
+            options={POSITION_OPTIONS}
+            selectedValue={form.primaryPosition}
+            onSelect={(value) => setForm({ ...form, primaryPosition: value })}
+            placeholder="Select Primary Position"
+            style={{ marginBottom: 12 }}
           />
 
-          <TextInput
-            style={styles.input}
-            placeholder="Secondary Position(s)"
-            value={form.secondaryPosition}
-            onChangeText={(t) => setForm({ ...form, secondaryPosition: t })}
+          <CustomDropdown
+            options={POSITION_OPTIONS}
+            selectedValue={form.secondaryPosition}
+            onSelect={(value) => setForm({ ...form, secondaryPosition: value })}
+            placeholder="Select Secondary Position"
+            style={{ marginBottom: 12 }}
           />
 
           <TextInput
@@ -211,12 +313,12 @@ const uploadFile = async (uri, path) => {
             onChangeText={(t) => setForm({ ...form, currentClub: t })}
           />
 
-          <TextInput
-            style={styles.input}
-            placeholder="Years of Playing Experience"
-            keyboardType="numeric"
-            value={form.experience}
-            onChangeText={(t) => setForm({ ...form, experience: t })}
+          <CustomDropdown
+            options={EXPERIENCE_OPTIONS}
+            selectedValue={form.experience}
+            onSelect={(value) => setForm({ ...form, experience: value })}
+            placeholder="Select Years of Experience"
+            style={{ marginBottom: 12 }}
           />
 
           <TextInput
@@ -232,8 +334,19 @@ const uploadFile = async (uri, path) => {
               <Text style={styles.backBtnText}>⬅️ Back</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
-              <Text style={styles.submitBtnText}>✅ Submit</Text>
+            <TouchableOpacity 
+              style={[styles.submitBtn, isSubmitting && styles.submitBtnDisabled]} 
+              onPress={handleSubmit}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator color="#fff" size="small" />
+                  <Text style={styles.submitBtnText}>Submitting...</Text>
+                </View>
+              ) : (
+                <Text style={styles.submitBtnText}>✅ Submit</Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -274,6 +387,11 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 12,
     backgroundColor: "#f9f9f9",
+  },
+  readOnlyInput: {
+    backgroundColor: "#e9ecef",
+    color: "#6c757d",
+    borderColor: "#ced4da",
   },
   label: {
     fontWeight: "600",
@@ -320,6 +438,66 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   submitBtnText: { color: "#fff", fontWeight: "bold" },
+  submitBtnDisabled: {
+    backgroundColor: "#74b9ff",
+    opacity: 0.7,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  // Dropdown styles
+  dropdownButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingRight: 15,
+  },
+  dropdownText: {
+    fontSize: 16,
+    color: '#2d3436',
+  },
+  placeholderText: {
+    color: '#636e72',
+  },
+  dropdownArrow: {
+    fontSize: 12,
+    color: '#636e72',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dropdownModal: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    maxHeight: 300,
+    width: Platform.OS === 'web' ? 300 : '80%',
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  dropdownItem: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  selectedDropdownItem: {
+    backgroundColor: '#e3f2fd',
+  },
+  dropdownItemText: {
+    fontSize: 16,
+    color: '#2d3436',
+  },
+  selectedDropdownItemText: {
+    color: '#1976d2',
+    fontWeight: '600',
+  },
 });
 
 export default PlayerForm;

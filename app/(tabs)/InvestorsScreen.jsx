@@ -1,7 +1,7 @@
+import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, StyleSheet, ActivityIndicator } from "react-native";
+import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-native";
 import { auth, db } from "../../config/firebase";
-import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 
 export default function PlayerInvestorsScreen() {
   const [investors, setInvestors] = useState([]);
@@ -13,10 +13,10 @@ export default function PlayerInvestorsScreen() {
         const user = auth.currentUser;
         if (!user) return;
 
-        // 1. Find the player's Firestore doc (if you store userId in players)
+        // 1. Find the player's Firestore doc using email
         const playerQuery = query(
           collection(db, "players"),
-          where("userId", "==", user.uid) // player doc linked to auth.uid
+          where("email", "==", user.email)
         );
 
         const playerSnapshot = await getDocs(playerQuery);
@@ -48,6 +48,8 @@ export default function PlayerInvestorsScreen() {
             investorData.push({
               id: investorSnap.id,
               ...investorSnap.data(),
+              investmentId: docSnap.id,
+              investedAt: data.investedAt,
               amount: data.amount || "N/A", // default if not stored
             });
           }
@@ -86,11 +88,15 @@ export default function PlayerInvestorsScreen() {
       <FlatList
         data={investors}
         keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.list}
         renderItem={({ item }) => (
           <View style={styles.investorCard}>
-            <Text style={styles.name}>{item.name || "Unnamed Investor"}</Text>
-            <Text style={styles.details}>Email: {item.email}</Text>
-            <Text style={styles.details}>Invested Amount: ₹{item.amount}</Text>
+            <Text style={styles.name}>👤 {item.name || "Unnamed Investor"}</Text>
+            <Text style={styles.details}>📧 {item.email}</Text>
+            <Text style={styles.details}>💰 Invested Amount: ₹{item.amount}</Text>
+            <Text style={styles.details}>
+              ⏳ Invested on: {item.investedAt?.toDate().toDateString() || "Unknown Date"}
+            </Text>
           </View>
         )}
       />
@@ -99,11 +105,28 @@ export default function PlayerInvestorsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: "#fff" },
-  heading: { fontSize: 22, fontWeight: "bold", marginBottom: 16 },
-  investorCard: { padding: 16, backgroundColor: "#f5f5f5", borderRadius: 10, marginBottom: 12 },
-  name: { fontSize: 18, fontWeight: "600" },
-  details: { fontSize: 14, color: "#555", marginTop: 4 },
+  container: { flex: 1, backgroundColor: "#f5f7fa" },
+  list: { padding: 16 },
+  heading: { 
+    fontSize: 24, 
+    fontWeight: "bold", 
+    marginBottom: 20, 
+    color: "#2d3436",
+    textAlign: "center",
+    marginTop: 16,
+  },
+  investorCard: { 
+    padding: 16, 
+    backgroundColor: "#fff", 
+    borderRadius: 12, 
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  name: { fontSize: 18, fontWeight: "bold", color: "#2d3436", marginBottom: 8 },
+  details: { fontSize: 14, color: "#636e72", marginTop: 4 },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
-  emptyText: { fontSize: 16, color: "#888" },
+  emptyText: { fontSize: 16, color: "#636e72" },
 });

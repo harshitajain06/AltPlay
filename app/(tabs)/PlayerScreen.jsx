@@ -1,26 +1,26 @@
-import React, { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  FlatList,
-  Image,
-  StyleSheet,
-  ActivityIndicator,
-  TouchableOpacity,
-  ScrollView,
-  Platform,
-} from "react-native";
-import {
+  addDoc,
   collection,
-  getDocs,
   doc,
   getDoc,
-  serverTimestamp,
-  addDoc,
+  getDocs,
   query,
+  serverTimestamp,
   where,
 } from "firebase/firestore";
-import { db, auth } from "../../config/firebase";
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  Image,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { auth, db } from "../../config/firebase";
 
 const PlayerScreen = () => {
   const [players, setPlayers] = useState([]);
@@ -163,7 +163,14 @@ const PlayerScreen = () => {
       {modalVisible && selectedPlayer && (
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
-            <ScrollView showsVerticalScrollIndicator={false}>
+            {/* Scrollable Content */}
+            <ScrollView 
+              showsVerticalScrollIndicator={true}
+              bounces={true}
+              scrollEventThrottle={16}
+              contentContainerStyle={styles.scrollContent}
+              style={styles.scrollView}
+            >
               {selectedPlayer.profilePhoto && (
                 <Image
                   source={{ uri: selectedPlayer.profilePhoto }}
@@ -207,7 +214,7 @@ const PlayerScreen = () => {
               </Text>
             </ScrollView>
 
-            {/* Action Buttons */}
+            {/* Fixed Action Buttons */}
             <View style={styles.buttonRow}>
               <TouchableOpacity
                 style={[
@@ -285,6 +292,21 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 10,
     elevation: 5,
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+    marginBottom: 20,
+    ...(Platform.OS === 'web' && {
+      maxHeight: '60vh',
+      overflow: 'auto',
+    }),
+  },
+  scrollContent: {
+    paddingBottom: 10,
+    ...(Platform.OS === 'web' && {
+      paddingRight: 10,
+    }),
   },
   modalImage: {
     width: "100%",
@@ -312,7 +334,10 @@ const styles = StyleSheet.create({
   buttonRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 20,
+    marginTop: 15,
+    paddingTop: 15,
+    borderTopWidth: 1,
+    borderTopColor: "#e9ecef",
   },
   investButton: {
     flex: 1,
