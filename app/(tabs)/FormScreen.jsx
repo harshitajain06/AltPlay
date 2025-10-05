@@ -99,6 +99,7 @@ const PlayerForm = () => {
   const [user, loading, error] = useAuthState(auth);
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [upiError, setUpiError] = useState(false);
   const [form, setForm] = useState({
     fullName: "",
     dob: new Date(),
@@ -116,6 +117,7 @@ const PlayerForm = () => {
     currentClub: "",
     experience: "",
     jerseyNumber: "",
+    upiLink: "",
   });
 
   // Auto-populate email from authenticated user
@@ -127,6 +129,17 @@ const PlayerForm = () => {
       }));
     }
   }, [user]);
+
+  // UPI link validation
+  const validateUPILink = (upiLink) => {
+    if (!upiLink) return true; // Optional field
+    
+    // Check if it's a valid UPI link or UPI ID
+    const upiLinkRegex = /^(https?:\/\/)?(www\.)?(upi\.link\/|paytm\.me\/|phonepe\.me\/|gpay\.me\/)/i;
+    const upiIdRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+$/;
+    
+    return upiLinkRegex.test(upiLink) || upiIdRegex.test(upiLink);
+  };
 
   const pickImage = async (field) => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -161,6 +174,12 @@ const uploadFile = async (uri, path) => {
 
 
   const handleSubmit = async () => {
+    // Validate UPI link if provided
+    if (form.upiLink && !validateUPILink(form.upiLink)) {
+      alert("⚠️ Please enter a valid UPI link or UPI ID (e.g., https://upi.link/your-id or your-id@paytm)");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       let photoURL = null;
@@ -329,6 +348,34 @@ const uploadFile = async (uri, path) => {
             onChangeText={(t) => setForm({ ...form, jerseyNumber: t })}
           />
 
+          <Text style={styles.label}>UPI Payment Link (for receiving investments)</Text>
+          <TextInput
+            style={[styles.input, upiError && styles.errorInput]}
+            placeholder="https://upi.link/your-upi-id or UPI ID"
+            value={form.upiLink}
+            onChangeText={(t) => {
+              setForm({ ...form, upiLink: t });
+              setUpiError(false); // Clear error when user types
+            }}
+            onBlur={() => {
+              if (form.upiLink && !validateUPILink(form.upiLink)) {
+                setUpiError(true);
+              } else {
+                setUpiError(false);
+              }
+            }}
+            keyboardType="url"
+            autoCapitalize="none"
+          />
+          {upiError && (
+            <Text style={styles.errorText}>
+              ⚠️ Please enter a valid UPI link or UPI ID
+            </Text>
+          )}
+          <Text style={styles.helpText}>
+            💡 Provide your UPI link or UPI ID so investors can easily send you payments
+          </Text>
+
           <View style={styles.row}>
             <TouchableOpacity style={styles.backBtn} onPress={() => setStep(1)}>
               <Text style={styles.backBtnText}>⬅️ Back</Text>
@@ -397,6 +444,24 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginBottom: 6,
     color: "#2d3436",
+  },
+  helpText: {
+    fontSize: Platform.OS === 'web' ? 12 : 11,
+    color: "#636e72",
+    marginTop: 4,
+    marginBottom: 12,
+    fontStyle: "italic",
+  },
+  errorInput: {
+    borderColor: "#e74c3c",
+    borderWidth: 2,
+  },
+  errorText: {
+    fontSize: Platform.OS === 'web' ? 12 : 11,
+    color: "#e74c3c",
+    marginTop: 4,
+    marginBottom: 8,
+    fontWeight: "500",
   },
   uploadBtn: {
     backgroundColor: "#74b9ff",
