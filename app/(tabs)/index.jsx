@@ -81,7 +81,8 @@ export default function AuthPage() {
     <ScrollView 
       contentContainerStyle={[styles.container, isDarkMode && styles.containerDark]} 
       keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator={false}
+      showsVerticalScrollIndicator={Platform.OS !== 'web'}
+      style={styles.scrollView}
     >
       <View style={styles.contentWrapper}>
         <View style={styles.iconContainer}>
@@ -253,36 +254,42 @@ export default function AuthPage() {
 }
 
 const styles = StyleSheet.create({
+  scrollView: {
+    flex: 1,
+  },
   container: {
     flexGrow: 1,
     backgroundColor: '#f0f4f8',
-    minHeight: Platform.OS === 'web' ? '100vh' : '100%',
     ...(Platform.OS === 'web' && {
-      justifyContent: 'center',
+      minHeight: '100vh',
+      paddingVertical: 20,
       background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    }),
+    ...(Platform.OS !== 'web' && {
+      minHeight: '100%',
     }),
   },
   containerDark: {
     backgroundColor: '#0a0e27',
   },
   contentWrapper: {
-    padding: Platform.OS === 'web' ? 24 : 24,
-    paddingTop: Platform.OS === 'web' ? 20 : 60,
-    paddingBottom: Platform.OS === 'web' ? 20 : 24,
+    padding: Platform.OS === 'web' ? 20 : 24,
+    paddingTop: Platform.OS === 'web' ? 16 : 60,
+    paddingBottom: Platform.OS === 'web' ? 24 : 24,
     maxWidth: Platform.OS === 'web' ? 480 : undefined,
     width: Platform.OS === 'web' ? '100%' : undefined,
     alignSelf: Platform.OS === 'web' ? 'center' : undefined,
   },
   iconContainer: { 
     alignItems: 'center', 
-    marginBottom: Platform.OS === 'web' ? 12 : 24,
+    marginBottom: Platform.OS === 'web' ? 8 : 24,
   },
   iconCircle: { 
     backgroundColor: '#ffffff', 
-    padding: Platform.OS === 'web' ? 12 : 16, 
+    padding: Platform.OS === 'web' ? 10 : 16, 
     borderRadius: 28,
-    width: Platform.OS === 'web' ? 80 : 100,
-    height: Platform.OS === 'web' ? 80 : 100,
+    width: Platform.OS === 'web' ? 72 : 100,
+    height: Platform.OS === 'web' ? 72 : 100,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#0984e3',
@@ -303,10 +310,10 @@ const styles = StyleSheet.create({
     height: Platform.OS === 'web' ? 48 : 64,
   },
   title: { 
-    fontSize: Platform.OS === 'web' ? 32 : 36, 
+    fontSize: Platform.OS === 'web' ? 28 : 36, 
     fontWeight: '800', 
     textAlign: 'center', 
-    marginBottom: Platform.OS === 'web' ? 6 : 10,
+    marginBottom: Platform.OS === 'web' ? 4 : 10,
     color: '#1a1a1a',
     letterSpacing: -0.8,
   },
@@ -314,9 +321,9 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   subtitle: {
-    fontSize: Platform.OS === 'web' ? 15 : 17,
+    fontSize: Platform.OS === 'web' ? 14 : 17,
     textAlign: 'center',
-    marginBottom: Platform.OS === 'web' ? 24 : 36,
+    marginBottom: Platform.OS === 'web' ? 16 : 36,
     color: '#636e72',
     fontWeight: '500',
     letterSpacing: 0.2,
@@ -327,7 +334,7 @@ const styles = StyleSheet.create({
   tabContainer: { 
     flexDirection: 'row', 
     backgroundColor: '#ffffff',
-    marginBottom: Platform.OS === 'web' ? 24 : 36, 
+    marginBottom: Platform.OS === 'web' ? 16 : 36, 
     borderRadius: 18,
     padding: 6,
     shadowColor: '#0984e3',
@@ -370,23 +377,23 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   form: { 
-    marginBottom: Platform.OS === 'web' ? 16 : 24,
+    marginBottom: Platform.OS === 'web' ? 8 : 24,
   },
   inputGroup: {
-    marginBottom: Platform.OS === 'web' ? 14 : 20,
+    marginBottom: Platform.OS === 'web' ? 12 : 20,
   },
   label: { 
-    marginBottom: Platform.OS === 'web' ? 6 : 8, 
+    marginBottom: Platform.OS === 'web' ? 5 : 8, 
     fontWeight: '600', 
     color: '#1a1a1a',
-    fontSize: Platform.OS === 'web' ? 14 : 15,
+    fontSize: Platform.OS === 'web' ? 13 : 15,
   },
   labelDark: {
     color: '#e0e0e0',
   },
   input: { 
     backgroundColor: '#ffffff', 
-    padding: Platform.OS === 'web' ? 14 : 18, 
+    padding: Platform.OS === 'web' ? 12 : 18, 
     borderRadius: 14, 
     borderWidth: 2, 
     borderColor: '#e0e0e0', 
@@ -405,10 +412,11 @@ const styles = StyleSheet.create({
   },
   button: { 
     backgroundColor: '#0984e3', 
-    padding: Platform.OS === 'web' ? 16 : 18, 
+    padding: Platform.OS === 'web' ? 14 : 18, 
     borderRadius: 14, 
     alignItems: 'center',
-    marginTop: Platform.OS === 'web' ? 8 : 12,
+    marginTop: Platform.OS === 'web' ? 4 : 12,
+    marginBottom: Platform.OS === 'web' ? 8 : 0,
     shadowColor: '#0984e3',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.4,
@@ -434,7 +442,7 @@ const styles = StyleSheet.create({
   },
   roleOption: { 
     flex: 1, 
-    padding: Platform.OS === 'web' ? 12 : 14, 
+    padding: Platform.OS === 'web' ? 10 : 14, 
     borderWidth: 1.5, 
     borderColor: '#e0e0e0', 
     borderRadius: 12, 
