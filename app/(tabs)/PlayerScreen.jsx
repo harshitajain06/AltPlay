@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
   FlatList,
   Image,
+  Linking,
   Platform,
   ScrollView,
   StyleSheet,
@@ -212,6 +213,30 @@ const PlayerScreen = () => {
               <Text style={styles.modalDetail}>
                 🎽 Jersey: #{selectedPlayer.jerseyNumber}
               </Text>
+
+              {/* YouTube Video */}
+              {selectedPlayer.youtubeUrl && (
+                <>
+                  <Text style={styles.sectionTitle}>Video</Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      if (Platform.OS === 'web') {
+                        window.open(selectedPlayer.youtubeUrl, '_blank');
+                      } else {
+                        Linking.openURL(selectedPlayer.youtubeUrl);
+                      }
+                    }}
+                    style={styles.youtubeLink}
+                  >
+                    <Text style={styles.youtubeLinkText}>
+                      🎥 Watch on YouTube
+                    </Text>
+                  </TouchableOpacity>
+                  <Text style={[styles.modalDetail, styles.youtubeUrl]}>
+                    {selectedPlayer.youtubeUrl}
+                  </Text>
+                </>
+              )}
             </ScrollView>
 
             {/* Fixed Action Buttons */}
@@ -360,6 +385,27 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   closeButtonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
+  
+  // YouTube Video Styles
+  youtubeLink: {
+    backgroundColor: "#FF0000",
+    padding: 12,
+    borderRadius: 10,
+    alignItems: "center",
+    marginVertical: 8,
+  },
+  youtubeLinkText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  youtubeUrl: {
+    fontSize: 12,
+    color: "#636e72",
+    fontStyle: "italic",
+    marginTop: 4,
+    textAlign: "center",
+  },
 });
 
 export default PlayerScreen;

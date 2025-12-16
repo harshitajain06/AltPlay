@@ -100,6 +100,7 @@ const PlayerForm = () => {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [upiError, setUpiError] = useState(false);
+  const [youtubeError, setYoutubeError] = useState(false);
   const [form, setForm] = useState({
     fullName: "",
     dob: new Date(),
@@ -118,6 +119,7 @@ const PlayerForm = () => {
     experience: "",
     jerseyNumber: "",
     upiLink: "",
+    youtubeUrl: "",
   });
 
   // Auto-populate email from authenticated user
@@ -139,6 +141,16 @@ const PlayerForm = () => {
     const upiIdRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+$/;
     
     return upiLinkRegex.test(upiLink) || upiIdRegex.test(upiLink);
+  };
+
+  // YouTube URL validation
+  const validateYouTubeUrl = (url) => {
+    if (!url) return true; // Optional field
+    
+    // Check if it's a valid YouTube URL
+    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)[\w-]+/i;
+    
+    return youtubeRegex.test(url);
   };
 
   const pickImage = async (field) => {
@@ -177,6 +189,12 @@ const uploadFile = async (uri, path) => {
     // Validate UPI link if provided
     if (form.upiLink && !validateUPILink(form.upiLink)) {
       alert("⚠️ Please enter a valid UPI link or UPI ID (e.g., https://upi.link/your-id or your-id@paytm)");
+      return;
+    }
+
+    // Validate YouTube URL if provided
+    if (form.youtubeUrl && !validateYouTubeUrl(form.youtubeUrl)) {
+      alert("⚠️ Please enter a valid YouTube URL (e.g., https://www.youtube.com/watch?v=VIDEO_ID or https://youtu.be/VIDEO_ID)");
       return;
     }
 
@@ -374,6 +392,34 @@ const uploadFile = async (uri, path) => {
           )}
           <Text style={styles.helpText}>
             💡 Provide your UPI link or UPI ID so investors can easily send you payments
+          </Text>
+
+          <Text style={styles.label}>YouTube Video URL (optional)</Text>
+          <TextInput
+            style={[styles.input, youtubeError && styles.errorInput]}
+            placeholder="https://www.youtube.com/watch?v=VIDEO_ID or https://youtu.be/VIDEO_ID"
+            value={form.youtubeUrl}
+            onChangeText={(t) => {
+              setForm({ ...form, youtubeUrl: t });
+              setYoutubeError(false); // Clear error when user types
+            }}
+            onBlur={() => {
+              if (form.youtubeUrl && !validateYouTubeUrl(form.youtubeUrl)) {
+                setYoutubeError(true);
+              } else {
+                setYoutubeError(false);
+              }
+            }}
+            keyboardType="url"
+            autoCapitalize="none"
+          />
+          {youtubeError && (
+            <Text style={styles.errorText}>
+              ⚠️ Please enter a valid YouTube URL
+            </Text>
+          )}
+          <Text style={styles.helpText}>
+            🎥 Share a video showcasing your skills and gameplay
           </Text>
 
           <View style={styles.row}>
