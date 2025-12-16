@@ -342,7 +342,7 @@ const AdminScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#f0f4f8',
   },
   scrollContent: {
     flexGrow: 1,

@@ -66,8 +66,12 @@ const MyInvestmentsScreen = () => {
       </View>
       {currentData.length === 0 ? (
         <View style={styles.empty}>
+          <Text style={{ fontSize: 48, marginBottom: 16 }}>💰</Text>
           <Text style={styles.emptyText}>
             No investments made yet.
+          </Text>
+          <Text style={{ fontSize: 14, color: "#95a5a6", marginTop: 8, textAlign: "center", paddingHorizontal: 40 }}>
+            Your investments will appear here once you start investing in players
           </Text>
         </View>
       ) : (
@@ -90,43 +94,52 @@ const MyInvestmentsScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  loader: { flex: 1, justifyContent: "center", alignItems: "center" },
+  container: { flex: 1, backgroundColor: "#f0f4f8" },
+  loader: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#f0f4f8" },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: 16,
-    paddingTop: 20,
-    backgroundColor: "#f8f9fa",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e9ecef",
+    padding: 20,
+    paddingTop: 24,
+    backgroundColor: "#ffffff",
+    borderBottomWidth: 2,
+    borderBottomColor: "#e8f4fd",
+    shadowColor: "#0984e3",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#2d3436",
+    fontSize: 24,
+    fontWeight: "800",
+    color: "#1a1a1a",
+    letterSpacing: -0.5,
   },
   headerCount: {
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: 20,
+    fontWeight: "700",
     color: "#0984e3",
   },
   empty: { flex: 1, justifyContent: "center", alignItems: "center" },
-  emptyText: { fontSize: 16, color: "#636e72" },
+  emptyText: { fontSize: 18, color: "#636e72", fontWeight: "500" },
   list: { padding: 16 },
   card: {
     backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 2,
+    borderRadius: 18,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: "#0984e3",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: "#e8f4fd",
   },
-  playerName: { fontSize: 18, fontWeight: "bold", color: "#2d3436" },
-  detail: { fontSize: 14, color: "#636e72", marginTop: 4 },
+  playerName: { fontSize: 20, fontWeight: "bold", color: "#1a1a1a", marginBottom: 4 },
+  detail: { fontSize: 15, color: "#636e72", marginTop: 6 },
 });
 
 export default MyInvestmentsScreen;

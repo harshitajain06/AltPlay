@@ -69,7 +69,8 @@ export default function PlayerInvestorsScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#4CAF50" />
+        <ActivityIndicator size="large" color="#0984e3" />
+        <Text style={styles.emptyText}>Loading investors...</Text>
       </View>
     );
   }
@@ -77,7 +78,11 @@ export default function PlayerInvestorsScreen() {
   if (investors.length === 0) {
     return (
       <View style={styles.center}>
+        <Text style={{ fontSize: 48, marginBottom: 16 }}>👥</Text>
         <Text style={styles.emptyText}>No investors yet.</Text>
+        <Text style={{ fontSize: 14, color: "#95a5a6", marginTop: 8, textAlign: "center", paddingHorizontal: 40 }}>
+          Investors who support you will appear here
+        </Text>
       </View>
     );
   }
@@ -105,28 +110,42 @@ export default function PlayerInvestorsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f5f7fa" },
+  container: { flex: 1, backgroundColor: "#f0f4f8" },
   list: { padding: 16 },
   heading: { 
-    fontSize: 24, 
-    fontWeight: "bold", 
-    marginBottom: 20, 
-    color: "#2d3436",
+    fontSize: 28, 
+    fontWeight: "800", 
+    marginBottom: 24, 
+    color: "#1a1a1a",
     textAlign: "center",
-    marginTop: 16,
+    marginTop: 20,
+    letterSpacing: -0.5,
   },
   investorCard: { 
-    padding: 16, 
+    padding: 20, 
     backgroundColor: "#fff", 
-    borderRadius: 12, 
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
+    borderRadius: 18, 
+    marginBottom: 16,
+    shadowColor: "#0984e3",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: "#e8f4fd",
   },
   name: { fontSize: 18, fontWeight: "bold", color: "#2d3436", marginBottom: 8 },
   details: { fontSize: 14, color: "#636e72", marginTop: 4 },
-  center: { flex: 1, alignItems: "center", justifyContent: "center" },
-  emptyText: { fontSize: 16, color: "#636e72" },
+  center: { 
+    flex: 1, 
+    alignItems: "center", 
+    justifyContent: "center",
+    backgroundColor: "#f0f4f8",
+  },
+  emptyText: { 
+    fontSize: 18, 
+    color: "#636e72",
+    fontWeight: "500",
+    marginTop: 12,
+  },
 });

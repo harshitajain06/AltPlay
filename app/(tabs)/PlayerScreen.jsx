@@ -118,7 +118,11 @@ const PlayerScreen = () => {
   if (players.length === 0) {
     return (
       <View style={styles.empty}>
+        <Text style={{ fontSize: 48, marginBottom: 16 }}>⚽</Text>
         <Text style={styles.emptyText}>No players registered yet.</Text>
+        <Text style={{ fontSize: 14, color: "#95a5a6", marginTop: 8, textAlign: "center", paddingHorizontal: 40 }}>
+          Players will appear here once they register
+        </Text>
       </View>
     );
   }
@@ -269,24 +273,56 @@ const PlayerScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  loader: { flex: 1, justifyContent: "center", alignItems: "center" },
-  empty: { flex: 1, justifyContent: "center", alignItems: "center" },
-  emptyText: { fontSize: 16, color: "#636e72" },
+  loader: { 
+    flex: 1, 
+    justifyContent: "center", 
+    alignItems: "center",
+    backgroundColor: "#f0f4f8",
+  },
+  empty: { 
+    flex: 1, 
+    justifyContent: "center", 
+    alignItems: "center",
+    backgroundColor: "#f0f4f8",
+  },
+  emptyText: { 
+    fontSize: 18, 
+    color: "#636e72",
+    fontWeight: "500",
+    marginTop: 12,
+  },
   list: { padding: 16 },
   card: {
     flexDirection: "row",
     backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: "#0984e3",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
     cursor: Platform.OS === "web" ? "pointer" : "auto",
+    borderWidth: 1,
+    borderColor: "#e8f4fd",
+    ...(Platform.OS === "web" && {
+      transition: "all 0.3s ease",
+    }),
   },
-  avatar: { width: 80, height: 80, borderRadius: 40, marginRight: 12 },
-  placeholder: { backgroundColor: "#dfe6e9" },
+  avatar: { 
+    width: 90, 
+    height: 90, 
+    borderRadius: 45, 
+    marginRight: 16,
+    borderWidth: 3,
+    borderColor: "#e8f4fd",
+  },
+  placeholder: { 
+    backgroundColor: "#e3f2fd",
+    borderWidth: 3,
+    borderColor: "#b3d9ff",
+  },
   info: { flex: 1, justifyContent: "center" },
   name: { fontSize: 18, fontWeight: "bold", color: "#2d3436" },
   position: { fontSize: 14, color: "#636e72", marginVertical: 2 },
@@ -308,16 +344,19 @@ const styles = StyleSheet.create({
   },
   modalBox: {
     width: "100%",
-    maxWidth: 500,
+    maxWidth: 520,
     maxHeight: "85%",
     backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 5,
+    borderRadius: 24,
+    padding: 24,
+    shadowColor: "#0984e3",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
     flex: 1,
+    borderWidth: 1,
+    borderColor: "#e8f4fd",
   },
   scrollView: {
     flex: 1,
@@ -367,32 +406,48 @@ const styles = StyleSheet.create({
   investButton: {
     flex: 1,
     backgroundColor: "#0984e3",
-    padding: 12,
-    borderRadius: 10,
+    padding: 14,
+    borderRadius: 14,
     alignItems: "center",
     marginRight: 8,
+    shadowColor: "#0984e3",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   disabledButton: {
     backgroundColor: "#b2bec3",
+    shadowOpacity: 0,
   },
   investButtonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
   closeButton: {
     flex: 1,
     backgroundColor: "#d63031",
-    padding: 12,
-    borderRadius: 10,
+    padding: 14,
+    borderRadius: 14,
     alignItems: "center",
     marginLeft: 8,
+    shadowColor: "#d63031",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   closeButtonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
   
   // YouTube Video Styles
   youtubeLink: {
     backgroundColor: "#FF0000",
-    padding: 12,
-    borderRadius: 10,
+    padding: 14,
+    borderRadius: 14,
     alignItems: "center",
-    marginVertical: 8,
+    marginVertical: 10,
+    shadowColor: "#FF0000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   youtubeLinkText: {
     color: "#fff",

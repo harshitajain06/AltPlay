@@ -6,7 +6,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import { View, ActivityIndicator, Alert } from "react-native";
+import { View, ActivityIndicator, Alert, Platform } from "react-native";
 import { signOut, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, doc, getDoc } from "firebase/firestore";
 
@@ -37,9 +37,23 @@ const PlayerTabs = () => {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
-        tabBarInactiveTintColor: "gray",
+        tabBarInactiveTintColor: Colors[colorScheme ?? "light"].tabIconDefault,
         tabBarStyle: {
           backgroundColor: Colors[colorScheme ?? "light"].background,
+          borderTopWidth: 2,
+          borderTopColor: Colors[colorScheme ?? "light"].border,
+          height: Platform.OS === 'web' ? 70 : 65,
+          paddingBottom: Platform.OS === 'web' ? 10 : 8,
+          paddingTop: Platform.OS === 'web' ? 10 : 8,
+          shadowColor: '#0984e3',
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.1,
+          shadowRadius: 12,
+          elevation: 8,
+        },
+        tabBarLabelStyle: {
+          fontSize: Platform.OS === 'web' ? 13 : 12,
+          fontWeight: '600',
         },
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
@@ -71,9 +85,23 @@ const InvestorTabs = () => {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
-        tabBarInactiveTintColor: "gray",
+        tabBarInactiveTintColor: Colors[colorScheme ?? "light"].tabIconDefault,
         tabBarStyle: {
           backgroundColor: Colors[colorScheme ?? "light"].background,
+          borderTopWidth: 2,
+          borderTopColor: Colors[colorScheme ?? "light"].border,
+          height: Platform.OS === 'web' ? 70 : 65,
+          paddingBottom: Platform.OS === 'web' ? 10 : 8,
+          paddingTop: Platform.OS === 'web' ? 10 : 8,
+          shadowColor: '#0984e3',
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.1,
+          shadowRadius: 12,
+          elevation: 8,
+        },
+        tabBarLabelStyle: {
+          fontSize: Platform.OS === 'web' ? 13 : 12,
+          fontWeight: '600',
         },
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
@@ -104,9 +132,23 @@ const AdminTabs = () => {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
-        tabBarInactiveTintColor: "gray",
+        tabBarInactiveTintColor: Colors[colorScheme ?? "light"].tabIconDefault,
         tabBarStyle: {
           backgroundColor: Colors[colorScheme ?? "light"].background,
+          borderTopWidth: 2,
+          borderTopColor: Colors[colorScheme ?? "light"].border,
+          height: Platform.OS === 'web' ? 70 : 65,
+          paddingBottom: Platform.OS === 'web' ? 10 : 8,
+          paddingTop: Platform.OS === 'web' ? 10 : 8,
+          shadowColor: '#0984e3',
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.1,
+          shadowRadius: 12,
+          elevation: 8,
+        },
+        tabBarLabelStyle: {
+          fontSize: Platform.OS === 'web' ? 13 : 12,
+          fontWeight: '600',
         },
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
