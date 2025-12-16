@@ -1,6 +1,6 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as ImagePicker from "expo-image-picker";
-import { addDoc, collection } from "firebase/firestore";
+import { doc, getDoc, setDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import React, { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -99,8 +99,10 @@ const PlayerForm = () => {
   const [user, loading, error] = useAuthState(auth);
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const [upiError, setUpiError] = useState(false);
   const [youtubeError, setYoutubeError] = useState(false);
+  const [playerDocId, setPlayerDocId] = useState(null);
   const [form, setForm] = useState({
     fullName: "",
     dob: new Date(),
@@ -110,6 +112,7 @@ const PlayerForm = () => {
     email: "",
     gender: "",
     profilePhoto: null,
+    profilePhotoUrl: null,
 
     primaryPosition: "",
     secondaryPosition: "",
@@ -122,14 +125,94 @@ const PlayerForm = () => {
     youtubeUrl: "",
   });
 
-  // Auto-populate email from authenticated user
+  // Load existing player data and auto-populate email
   useEffect(() => {
-    if (user && user.email) {
+    const loadPlayerData = async () => {
+      if (!user) {
+        setIsLoadingData(false);
+        return;
+      }
+
+      // Auto-populate email from authenticated user
       setForm(prevForm => ({
         ...prevForm,
-        email: user.email
+        email: user.email || ""
       }));
-    }
+
+      try {
+        let playerData = null;
+        let docId = null;
+
+        // First, try to find by userId field
+        const playersQuery = query(
+          collection(db, "players"),
+          where("userId", "==", user.uid)
+        );
+        const querySnapshot = await getDocs(playersQuery);
+
+        if (!querySnapshot.empty) {
+          // Player data exists, load it
+          playerData = querySnapshot.docs[0].data();
+          docId = querySnapshot.docs[0].id;
+        } else {
+          // Fallback: try to get document by user.uid as document ID
+          try {
+            const playerDocRef = doc(db, "players", user.uid);
+            const playerDocSnap = await getDoc(playerDocRef);
+            if (playerDocSnap.exists()) {
+              playerData = playerDocSnap.data();
+              docId = playerDocSnap.id;
+            }
+          } catch (docError) {
+            console.log("No document found by ID either");
+          }
+        }
+
+        if (playerData && docId) {
+          setPlayerDocId(docId);
+
+          // Convert Firestore Timestamp to Date if needed
+          let dobDate = new Date();
+          if (playerData.dob) {
+            if (playerData.dob.toDate) {
+              dobDate = playerData.dob.toDate();
+            } else if (playerData.dob instanceof Date) {
+              dobDate = playerData.dob;
+            } else if (typeof playerData.dob === 'string' || typeof playerData.dob === 'number') {
+              dobDate = new Date(playerData.dob);
+            }
+          }
+
+          setForm({
+            fullName: playerData.fullName || "",
+            dob: dobDate,
+            nationality: playerData.nationality || "",
+            city: playerData.city || "",
+            phone: playerData.phone || "",
+            email: playerData.email || user.email || "",
+            gender: playerData.gender || "",
+            profilePhoto: null, // Don't load local URI, use URL instead
+            profilePhotoUrl: playerData.profilePhoto || null,
+
+            primaryPosition: playerData.primaryPosition || "",
+            secondaryPosition: playerData.secondaryPosition || "",
+            height: playerData.height || "",
+            weight: playerData.weight || "",
+            currentClub: playerData.currentClub || "",
+            experience: playerData.experience || "",
+            jerseyNumber: playerData.jerseyNumber || "",
+            upiLink: playerData.upiLink || "",
+            youtubeUrl: playerData.youtubeUrl || "",
+          });
+        }
+      } catch (error) {
+        console.error("Error loading player data:", error);
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+
+    loadPlayerData();
   }, [user]);
 
   // UPI link validation
@@ -198,35 +281,81 @@ const uploadFile = async (uri, path) => {
       return;
     }
 
+    if (!user) {
+      alert("⚠️ Please log in to save your data");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      let photoURL = null;
+      let photoURL = form.profilePhotoUrl; // Keep existing URL if no new photo uploaded
+      
+      // Upload new photo if one was selected
       if (form.profilePhoto) {
         photoURL = await uploadFile(
           form.profilePhoto,
-          `players/${form.fullName}_photo.jpg`
+          `players/${user.uid}_photo.jpg`
         );
       }
 
-      await addDoc(collection(db, "players"), {
-        ...form,
+      // Prepare form data (exclude profilePhoto and profilePhotoUrl from the document)
+      const { profilePhoto, profilePhotoUrl, ...formData } = form;
+      
+      const playerData = {
+        ...formData,
         profilePhoto: photoURL,
-        createdAt: new Date(),
-      });
+        userId: user.uid,
+        updatedAt: new Date(),
+      };
 
-      alert("🎉 Player registered successfully!");
+      // If player document exists, update it; otherwise create new
+      if (playerDocId) {
+        await setDoc(doc(db, "players", playerDocId), playerData, { merge: true });
+        alert("✅ Player details updated successfully!");
+      } else {
+        // Create new document with user's UID as document ID for easier lookup
+        const newPlayerRef = doc(db, "players", user.uid);
+        await setDoc(newPlayerRef, {
+          ...playerData,
+          createdAt: new Date(),
+        });
+        setPlayerDocId(user.uid);
+        alert("🎉 Player registered successfully!");
+      }
+
+      // Update local state to reflect saved photo URL
+      if (photoURL) {
+        setForm(prev => ({
+          ...prev,
+          profilePhotoUrl: photoURL,
+          profilePhoto: null, // Clear local photo after upload
+        }));
+      }
     } catch (error) {
       console.error(error);
-      alert("⚠️ Error saving data");
-      console.log(error);
+      alert("⚠️ Error saving data: " + error.message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (isLoadingData) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', flex: 1 }]}>
+        <ActivityIndicator size="large" color="#0984e3" />
+        <Text style={{ marginTop: 10, color: '#636e72' }}>Loading your data...</Text>
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.stepText}>Step {step} of 2</Text>
+      {playerDocId && (
+        <Text style={[styles.stepText, { fontSize: 14, color: '#00b894', marginBottom: 5 }]}>
+          ✏️ Edit your registration details
+        </Text>
+      )}
 
       {step === 1 && (
         <View style={styles.card}>
@@ -243,7 +372,11 @@ const uploadFile = async (uri, path) => {
           <DateTimePicker
             value={form.dob}
             mode="date"
-            onChange={(e, date) => setForm({ ...form, dob: date })}
+            onChange={(e, date) => {
+              if (date) {
+                setForm({ ...form, dob: date });
+              }
+            }}
           />
 
           <CustomDropdown
@@ -294,9 +427,9 @@ const uploadFile = async (uri, path) => {
             <Text style={styles.uploadBtnText}>📷 Upload Profile Photo</Text>
           </TouchableOpacity>
 
-          {form.profilePhoto && (
+          {(form.profilePhoto || form.profilePhotoUrl) && (
             <Image
-              source={{ uri: form.profilePhoto }}
+              source={{ uri: form.profilePhoto || form.profilePhotoUrl }}
               style={styles.imagePreview}
             />
           )}

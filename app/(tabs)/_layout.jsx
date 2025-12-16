@@ -153,17 +153,19 @@ const DrawerNavigator = ({ role }) => {
         options={{ title: "Home" }}
       />
 
-      {/* ✅ PlayerForm accessible via drawer */}
-      <Drawer.Screen
-        name="PlayerForm"
-        component={FormScreen}
-        options={{
-          title: "Player Registration",
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="create-outline" size={size} color={color} />
-          ),
-        }}
-      />
+      {/* ✅ PlayerForm accessible via drawer - hidden for investors */}
+      {role !== "investor" && (
+        <Drawer.Screen
+          name="PlayerForm"
+          component={FormScreen}
+          options={{
+            title: "Player Registration",
+            drawerIcon: ({ color, size }) => (
+              <Ionicons name="create-outline" size={size} color={color} />
+            ),
+          }}
+        />
+      )}
 
       <Drawer.Screen
         name="Logout"
