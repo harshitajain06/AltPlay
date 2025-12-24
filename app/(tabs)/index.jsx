@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
     ...(Platform.OS === 'web' && {
       minHeight: '100vh',
       paddingVertical: 20,
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      backgroundImage: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     }),
     ...(Platform.OS !== 'web' && {
       minHeight: '100%',

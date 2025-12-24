@@ -18,6 +18,8 @@ import InvestmentScreen from "./InvestmentScreen";
 import InvestorScreen from "./InvestorsScreen";
 import PlayerScreen from "./PlayerScreen";
 import ProfileScreen from "./ProfileScreen";
+import PerformanceInsightsScreen from "./PerformanceInsightsScreen";
+import PerformanceGraphScreen from "./PerformanceGraphScreen";
 import LoginRegister from "./index";
 
 import { Colors } from "../../constants/Colors";
@@ -204,6 +206,34 @@ const DrawerNavigator = ({ role }) => {
             title: "Player Registration",
             drawerIcon: ({ color, size }) => (
               <Ionicons name="create-outline" size={size} color={color} />
+            ),
+          }}
+        />
+      )}
+
+      {/* Performance Insights - only for players */}
+      {role === "player" && (
+        <Drawer.Screen
+          name="PerformanceInsights"
+          component={PerformanceInsightsScreen}
+          options={{
+            title: "Performance Insights",
+            drawerIcon: ({ color, size }) => (
+              <Ionicons name="stats-chart-outline" size={size} color={color} />
+            ),
+          }}
+        />
+      )}
+
+      {/* Performance Graph - only for players */}
+      {role === "player" && (
+        <Drawer.Screen
+          name="PerformanceGraph"
+          component={PerformanceGraphScreen}
+          options={{
+            title: "Performance Graph",
+            drawerIcon: ({ color, size }) => (
+              <Ionicons name="trending-up-outline" size={size} color={color} />
             ),
           }}
         />
