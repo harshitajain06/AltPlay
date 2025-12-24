@@ -1,3 +1,5 @@
+import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 import {
   addDoc,
   collection,
@@ -24,11 +26,15 @@ import {
 import { auth, db } from "../../config/firebase";
 
 const PlayerScreen = () => {
+  const navigation = useNavigation();
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [hasInvested, setHasInvested] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
+  const [profileModalVisible, setProfileModalVisible] = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(false);
 
   useEffect(() => {
     const fetchPlayers = async () => {
@@ -48,6 +54,73 @@ const PlayerScreen = () => {
 
     fetchPlayers();
   }, []);
+
+  const fetchUserProfile = async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      alert("Please log in to view your profile.");
+      return;
+    }
+
+    setLoadingProfile(true);
+    try {
+      // Try to find user's profile by userId field
+      const playersQuery = query(
+        collection(db, "players"),
+        where("userId", "==", user.uid)
+      );
+      const querySnapshot = await getDocs(playersQuery);
+
+      if (!querySnapshot.empty) {
+        const profileData = {
+          id: querySnapshot.docs[0].id,
+          ...querySnapshot.docs[0].data(),
+          // Use auth email if profile email is not available
+          email: querySnapshot.docs[0].data().email || user.email,
+        };
+        setUserProfile(profileData);
+        setProfileModalVisible(true);
+      } else {
+        // Fallback: try document ID
+        const playerDocRef = doc(db, "players", user.uid);
+        const playerDocSnap = await getDoc(playerDocRef);
+        if (playerDocSnap.exists()) {
+          const profileData = {
+            id: playerDocSnap.id,
+            ...playerDocSnap.data(),
+            // Use auth email if profile email is not available
+            email: playerDocSnap.data().email || user.email,
+          };
+          setUserProfile(profileData);
+          setProfileModalVisible(true);
+        } else {
+          // If no player profile found, show auth user info
+          const profileData = {
+            fullName: user.displayName || "User",
+            email: user.email || "No email available",
+          };
+          setUserProfile(profileData);
+          setProfileModalVisible(true);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      // Fallback to auth user info on error
+      const user = auth.currentUser;
+      if (user) {
+        const profileData = {
+          fullName: user.displayName || "User",
+          email: user.email || "No email available",
+        };
+        setUserProfile(profileData);
+        setProfileModalVisible(true);
+      } else {
+        alert("Failed to load profile. Please try again.");
+      }
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
 
   const checkInvestment = async (playerId) => {
     try {
@@ -107,6 +180,22 @@ const PlayerScreen = () => {
     }
   };
 
+  const handleViewGraph = () => {
+    if (!selectedPlayer) return;
+    
+    // Get the userId from the player document (could be in userId field or document ID)
+    const playerUserId = selectedPlayer.userId || selectedPlayer.id;
+    
+    // Navigate to PerformanceGraph screen with player info
+    navigation.navigate("PerformanceGraph", {
+      playerId: playerUserId,
+      playerName: selectedPlayer.fullName,
+    });
+    
+    // Close the modal
+    setModalVisible(false);
+  };
+
   if (loading) {
     return (
       <View style={styles.loader}>
@@ -157,6 +246,22 @@ const PlayerScreen = () => {
 
   return (
     <View style={{ flex: 1 }}>
+      {/* Header with Profile Icon */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Players</Text>
+        <TouchableOpacity
+          style={styles.profileIconButton}
+          onPress={fetchUserProfile}
+          disabled={loadingProfile}
+        >
+          {loadingProfile ? (
+            <ActivityIndicator size="small" color="#0984e3" />
+          ) : (
+            <Ionicons name="person-circle" size={32} color="#0984e3" />
+          )}
+        </TouchableOpacity>
+      </View>
+
       <FlatList
         data={players}
         renderItem={renderItem}
@@ -259,6 +364,13 @@ const PlayerScreen = () => {
               </TouchableOpacity>
 
               <TouchableOpacity
+                style={styles.graphButton}
+                onPress={handleViewGraph}
+              >
+                <Text style={styles.graphButtonText}>📈 View Graph</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
                 style={styles.closeButton}
                 onPress={() => setModalVisible(false)}
               >
@@ -268,11 +380,77 @@ const PlayerScreen = () => {
           </View>
         </View>
       )}
+
+      {/* User Profile Modal - Simplified to show only name and email */}
+      {profileModalVisible && userProfile && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.profileModalBox}>
+            <View style={styles.profileContent}>
+              {userProfile.profilePhoto && (
+                <Image
+                  source={{ uri: userProfile.profilePhoto }}
+                  style={styles.profileImage}
+                />
+              )}
+              {!userProfile.profilePhoto && (
+                <View style={styles.profileIconContainer}>
+                  <Ionicons name="person-circle" size={80} color="#0984e3" />
+                </View>
+              )}
+              
+              <Text style={styles.profileName}>
+                {userProfile.fullName || userProfile.name || "User"}
+              </Text>
+              
+              <View style={styles.profileDetails}>
+                <View style={styles.profileDetailRow}>
+                  <Ionicons name="mail-outline" size={20} color="#0984e3" />
+                  <Text style={styles.profileDetailText}>
+                    {userProfile.email || "No email available"}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Close Button */}
+            <TouchableOpacity
+              style={styles.profileCloseButton}
+              onPress={() => setProfileModalVisible(false)}
+            >
+              <Text style={styles.profileCloseButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === "web" ? 20 : 50,
+    paddingBottom: 12,
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e8f4fd",
+    shadowColor: "#0984e3",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#2d3436",
+  },
+  profileIconButton: {
+    padding: 4,
+  },
   loader: { 
     flex: 1, 
     justifyContent: "center", 
@@ -402,14 +580,16 @@ const styles = StyleSheet.create({
     paddingTop: 15,
     borderTopWidth: 1,
     borderTopColor: "#e9ecef",
+    flexWrap: "wrap",
   },
   investButton: {
     flex: 1,
+    minWidth: "30%",
     backgroundColor: "#0984e3",
     padding: 14,
     borderRadius: 14,
     alignItems: "center",
-    marginRight: 8,
+    marginRight: 4,
     shadowColor: "#0984e3",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -421,13 +601,29 @@ const styles = StyleSheet.create({
     shadowOpacity: 0,
   },
   investButtonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
+  graphButton: {
+    flex: 1,
+    minWidth: "30%",
+    backgroundColor: "#00b894",
+    padding: 14,
+    borderRadius: 14,
+    alignItems: "center",
+    marginHorizontal: 4,
+    shadowColor: "#00b894",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  graphButtonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
   closeButton: {
     flex: 1,
+    minWidth: "30%",
     backgroundColor: "#d63031",
     padding: 14,
     borderRadius: 14,
     alignItems: "center",
-    marginLeft: 8,
+    marginLeft: 4,
     shadowColor: "#d63031",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -460,6 +656,101 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
     marginTop: 4,
     textAlign: "center",
+  },
+  // UPI Link Styles
+  upiLink: {
+    backgroundColor: "#6c5ce7",
+    padding: 14,
+    borderRadius: 14,
+    alignItems: "center",
+    marginVertical: 10,
+    shadowColor: "#6c5ce7",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  upiLinkText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  
+  // Profile Modal Styles
+  profileModalBox: {
+    width: "100%",
+    maxWidth: 400,
+    backgroundColor: "#fff",
+    borderRadius: 24,
+    padding: 32,
+    shadowColor: "#0984e3",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+    borderWidth: 1,
+    borderColor: "#e8f4fd",
+    alignItems: "center",
+  },
+  profileContent: {
+    alignItems: "center",
+    width: "100%",
+  },
+  profileImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    marginBottom: 20,
+    borderWidth: 3,
+    borderColor: "#e8f4fd",
+  },
+  profileIconContainer: {
+    marginBottom: 20,
+  },
+  profileName: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#2d3436",
+    marginBottom: 24,
+    textAlign: "center",
+  },
+  profileDetails: {
+    width: "100%",
+    marginBottom: 24,
+  },
+  profileDetailRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: "#f0f4f8",
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  profileDetailText: {
+    fontSize: 16,
+    color: "#2d3436",
+    marginLeft: 12,
+    flex: 1,
+    textAlign: "center",
+  },
+  profileCloseButton: {
+    width: "100%",
+    backgroundColor: "#0984e3",
+    padding: 14,
+    borderRadius: 14,
+    alignItems: "center",
+    shadowColor: "#0984e3",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  profileCloseButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
   },
 });
 

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
+import { useRoute } from "@react-navigation/native";
 import {
   ActivityIndicator,
   Dimensions,
@@ -26,13 +27,18 @@ const PADDING = 40;
 
 const PerformanceGraphScreen = () => {
   const [user, loading] = useAuthState(auth);
+  const route = useRoute();
   const [isLoading, setIsLoading] = useState(true);
   const [performanceHistory, setPerformanceHistory] = useState([]);
   const [selectedMetrics, setSelectedMetrics] = useState([]);
+  
+  // Get playerId from route params if provided, otherwise use current user's uid
+  const targetUserId = route.params?.playerId || user?.uid;
+  const playerName = route.params?.playerName || null;
 
   useEffect(() => {
     const loadPerformanceHistory = async () => {
-      if (!user) {
+      if (!targetUserId) {
         setIsLoading(false);
         return;
       }
@@ -43,7 +49,7 @@ const PerformanceGraphScreen = () => {
           // Try with orderBy first
           performanceQuery = query(
             collection(db, "performanceInsights"),
-            where("userId", "==", user.uid),
+            where("userId", "==", targetUserId),
             orderBy("createdAt", "desc")
           );
         } catch (error) {
@@ -51,7 +57,7 @@ const PerformanceGraphScreen = () => {
           console.log("orderBy failed, using simple query:", error);
           performanceQuery = query(
             collection(db, "performanceInsights"),
-            where("userId", "==", user.uid)
+            where("userId", "==", targetUserId)
           );
         }
         
@@ -102,7 +108,7 @@ const PerformanceGraphScreen = () => {
     };
 
     loadPerformanceHistory();
-  }, [user]);
+  }, [targetUserId]);
 
   const getMetricDisplayName = (metric) => {
     const names = {
@@ -346,9 +352,15 @@ const PerformanceGraphScreen = () => {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <Text style={styles.title}>Performance Graph</Text>
-      <Text style={styles.subtitle}>
-        Track your progress across different metrics
-      </Text>
+      {playerName ? (
+        <Text style={styles.subtitle}>
+          Performance progress for {playerName}
+        </Text>
+      ) : (
+        <Text style={styles.subtitle}>
+          Track your progress across different metrics
+        </Text>
+      )}
 
       {selectedMetrics.length === 0 ? (
         <View style={styles.noDataContainer}>

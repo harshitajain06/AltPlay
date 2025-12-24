@@ -225,19 +225,18 @@ const DrawerNavigator = ({ role }) => {
         />
       )}
 
-      {/* Performance Graph - only for players */}
-      {role === "player" && (
-        <Drawer.Screen
-          name="PerformanceGraph"
-          component={PerformanceGraphScreen}
-          options={{
-            title: "Performance Graph",
-            drawerIcon: ({ color, size }) => (
-              <Ionicons name="trending-up-outline" size={size} color={color} />
-            ),
-          }}
-        />
-      )}
+      {/* Performance Graph - always available for navigation, but only shown in drawer for players */}
+      <Drawer.Screen
+        name="PerformanceGraph"
+        component={PerformanceGraphScreen}
+        options={{
+          title: "Performance Graph",
+          drawerIcon: ({ color, size }) => (
+            <Ionicons name="trending-up-outline" size={size} color={color} />
+          ),
+          drawerItemStyle: role === "player" ? {} : { display: "none" },
+        }}
+      />
 
       <Drawer.Screen
         name="Logout"
