@@ -8,8 +8,10 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import {
   collection,
   getDocs,
@@ -29,6 +31,7 @@ const PerformanceGraphScreen = () => {
   const [user, loading] = useAuthState(auth);
   const route = useRoute();
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [performanceHistory, setPerformanceHistory] = useState([]);
   const [selectedMetrics, setSelectedMetrics] = useState([]);
   
@@ -36,8 +39,12 @@ const PerformanceGraphScreen = () => {
   const targetUserId = route.params?.playerId || user?.uid;
   const playerName = route.params?.playerName || null;
 
-  useEffect(() => {
-    const loadPerformanceHistory = async () => {
+  const loadPerformanceHistory = async (isRefresh = false) => {
+    if (isRefresh) {
+      setIsRefreshing(true);
+    } else {
+      setIsLoading(true);
+    }
       if (!targetUserId) {
         setIsLoading(false);
         return;
@@ -104,11 +111,17 @@ const PerformanceGraphScreen = () => {
         console.error("Error loading performance history:", error);
       } finally {
         setIsLoading(false);
+        setIsRefreshing(false);
       }
     };
 
+  useEffect(() => {
     loadPerformanceHistory();
   }, [targetUserId]);
+
+  const handleRefresh = () => {
+    loadPerformanceHistory(true);
+  };
 
   const getMetricDisplayName = (metric) => {
     const names = {
@@ -330,7 +343,21 @@ const PerformanceGraphScreen = () => {
   if (performanceHistory.length === 0) {
     return (
       <View style={[styles.container, styles.centerContent]}>
-        <Text style={styles.emptyText}>No performance data found</Text>
+        <View style={styles.emptyHeaderContainer}>
+          <Text style={styles.emptyText}>No performance data found</Text>
+          <TouchableOpacity 
+            onPress={handleRefresh} 
+            style={styles.refreshButton}
+            disabled={isRefreshing}
+            activeOpacity={0.7}
+          >
+            {isRefreshing ? (
+              <ActivityIndicator size="small" color="#0984e3" />
+            ) : (
+              <Ionicons name="refresh" size={24} color="#0984e3" />
+            )}
+          </TouchableOpacity>
+        </View>
         <Text style={styles.emptySubtext}>
           Fill in your performance insights to see your progress graph
         </Text>
@@ -341,7 +368,21 @@ const PerformanceGraphScreen = () => {
   if (performanceHistory.length < 2) {
     return (
       <View style={[styles.container, styles.centerContent]}>
-        <Text style={styles.emptyText}>Not enough data for graphs</Text>
+        <View style={styles.emptyHeaderContainer}>
+          <Text style={styles.emptyText}>Not enough data for graphs</Text>
+          <TouchableOpacity 
+            onPress={handleRefresh} 
+            style={styles.refreshButton}
+            disabled={isRefreshing}
+            activeOpacity={0.7}
+          >
+            {isRefreshing ? (
+              <ActivityIndicator size="small" color="#0984e3" />
+            ) : (
+              <Ionicons name="refresh" size={24} color="#0984e3" />
+            )}
+          </TouchableOpacity>
+        </View>
         <Text style={styles.emptySubtext}>
           Update your performance insights at least once to see progress graphs
         </Text>
@@ -351,7 +392,21 @@ const PerformanceGraphScreen = () => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <Text style={styles.title}>Performance Graph</Text>
+      <View style={styles.headerContainer}>
+        <Text style={styles.title}>Performance Graph</Text>
+        <TouchableOpacity 
+          onPress={handleRefresh} 
+          style={styles.refreshButton}
+          disabled={isRefreshing}
+          activeOpacity={0.7}
+        >
+          {isRefreshing ? (
+            <ActivityIndicator size="small" color="#0984e3" />
+          ) : (
+            <Ionicons name="refresh" size={24} color="#0984e3" />
+          )}
+        </TouchableOpacity>
+      </View>
       {playerName ? (
         <Text style={styles.subtitle}>
           Performance progress for {playerName}
@@ -392,12 +447,34 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  headerContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+    position: "relative",
+  },
   title: {
     fontSize: 28,
     fontWeight: "bold",
     color: "#2d3436",
-    marginBottom: 8,
     textAlign: "center",
+  },
+  refreshButton: {
+    position: "absolute",
+    right: 0,
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: "#e8f4fd",
+    justifyContent: "center",
+    alignItems: "center",
+    width: 40,
+    height: 40,
+    shadowColor: "#0984e3",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   subtitle: {
     fontSize: 14,
@@ -409,11 +486,18 @@ const styles = StyleSheet.create({
     marginTop: 10,
     color: "#636e72",
   },
+  emptyHeaderContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 8,
+    paddingHorizontal: 20,
+  },
   emptyText: {
     fontSize: 20,
     fontWeight: "600",
     color: "#2d3436",
-    marginBottom: 8,
+    marginRight: 12,
   },
   emptySubtext: {
     fontSize: 14,

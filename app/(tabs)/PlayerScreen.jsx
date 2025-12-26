@@ -13,17 +13,28 @@ import {
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Dimensions,
   FlatList,
   Image,
   Linking,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import Animated, {
+  FadeInDown,
+  FadeInUp,
+} from "react-native-reanimated";
 import { auth, db } from "../../config/firebase";
+
+const { width } = Dimensions.get("window");
+const CARD_MARGIN = 12;
+const NUM_COLUMNS = 2;
+const CARD_WIDTH = (width - CARD_MARGIN * (NUM_COLUMNS + 1)) / NUM_COLUMNS;
 
 const PlayerScreen = () => {
   const navigation = useNavigation();
@@ -216,33 +227,62 @@ const PlayerScreen = () => {
     );
   }
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => handleOpenPlayer(item.id)}
-    >
-      {item.profilePhoto ? (
-        <Image source={{ uri: item.profilePhoto }} style={styles.avatar} />
-      ) : (
-        <View style={[styles.avatar, styles.placeholder]} />
-      )}
+  const renderItem = ({ item, index }) => {
+    return (
+      <Animated.View
+        entering={FadeInDown.delay(index * 100).springify().damping(15)}
+        style={[styles.gridCardContainer, { width: CARD_WIDTH }]}
+      >
+        <Pressable
+          style={({ pressed }) => [
+            styles.gridCard,
+            pressed && styles.gridCardPressed,
+          ]}
+          onPress={() => handleOpenPlayer(item.id)}
+        >
+          <Animated.View
+            entering={FadeInUp.delay(index * 100 + 50).springify()}
+            style={styles.cardImageContainer}
+          >
+            {item.profilePhoto ? (
+              <Image source={{ uri: item.profilePhoto }} style={styles.gridAvatar} />
+            ) : (
+              <View style={[styles.gridAvatar, styles.placeholder]}>
+                <Ionicons name="person" size={40} color="#0984e3" />
+              </View>
+            )}
+          </Animated.View>
 
-      <View style={styles.info}>
-        <Text style={styles.name}>{item.fullName}</Text>
-        <Text style={styles.position}>
-          {item.primaryPosition}{" "}
-          {item.secondaryPosition ? `| ${item.secondaryPosition}` : ""}
-        </Text>
-        <Text style={styles.club}>{item.currentClub || "Free Agent"}</Text>
-        <Text style={styles.details}>
-          📏 {item.height} cm | ⚖️ {item.weight} kg | 🎽 #{item.jerseyNumber}
-        </Text>
-        <Text style={styles.contact}>
-          📧 {item.email} | 📞 {item.phone}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  );
+          <View style={styles.gridInfo}>
+            <Text style={styles.gridName} numberOfLines={1}>
+              {item.fullName}
+            </Text>
+            <Text style={styles.gridPosition} numberOfLines={1}>
+              {item.primaryPosition}
+              {item.secondaryPosition ? ` | ${item.secondaryPosition}` : ""}
+            </Text>
+            <Text style={styles.gridClub} numberOfLines={1}>
+              {item.currentClub || "Free Agent"}
+            </Text>
+            <View style={styles.gridStats}>
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>📏</Text>
+                <Text style={styles.statValue}>{item.height}cm</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>⚖️</Text>
+                <Text style={styles.statValue}>{item.weight}kg</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>🎽</Text>
+                <Text style={styles.statValue}>#{item.jerseyNumber}</Text>
+              </View>
+            </View>
+          </View>
+        </Pressable>
+      </Animated.View>
+    );
+  };
 
   return (
     <View style={{ flex: 1 }}>
@@ -266,7 +306,11 @@ const PlayerScreen = () => {
         data={players}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
+        numColumns={NUM_COLUMNS}
+        contentContainerStyle={styles.gridList}
+        columnWrapperStyle={styles.row}
+        showsVerticalScrollIndicator={true}
+        removeClippedSubviews={false}
       />
 
       {/* Custom modal for web + mobile */}
@@ -322,6 +366,18 @@ const PlayerScreen = () => {
               <Text style={styles.modalDetail}>
                 🎽 Jersey: #{selectedPlayer.jerseyNumber}
               </Text>
+
+              {/* Investment Purpose */}
+              {selectedPlayer.investmentPurpose && (
+                <>
+                  <Text style={styles.sectionTitle}>Investment Purpose</Text>
+                  <View style={styles.investmentPurposeContainer}>
+                    <Text style={styles.investmentPurposeText}>
+                      {selectedPlayer.investmentPurpose}
+                    </Text>
+                  </View>
+                </>
+              )}
 
               {/* YouTube Video */}
               {selectedPlayer.youtubeUrl && (
@@ -469,44 +525,123 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     marginTop: 12,
   },
-  list: { padding: 16 },
-  card: {
-    flexDirection: "row",
+  gridList: { 
+    padding: CARD_MARGIN,
+    paddingBottom: CARD_MARGIN + 20,
+  },
+  row: {
+    justifyContent: "space-between",
+  },
+  gridCardContainer: {
+    marginBottom: CARD_MARGIN,
+  },
+  gridCard: {
     backgroundColor: "#fff",
-    borderRadius: 18,
+    borderRadius: 20,
     padding: 16,
-    marginBottom: 16,
     shadowColor: "#0984e3",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 6,
-    cursor: Platform.OS === "web" ? "pointer" : "auto",
-    borderWidth: 1,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 10,
+    borderWidth: 2,
     borderColor: "#e8f4fd",
+    overflow: "hidden",
+    minHeight: 280,
     ...(Platform.OS === "web" && {
-      transition: "all 0.3s ease",
+      cursor: "pointer",
+      transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
     }),
   },
-  avatar: { 
-    width: 90, 
-    height: 90, 
-    borderRadius: 45, 
-    marginRight: 16,
-    borderWidth: 3,
-    borderColor: "#e8f4fd",
+  gridCardPressed: {
+    transform: [{ scale: 0.97 }],
+    opacity: 0.85,
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+  },
+  cardImageContainer: {
+    alignItems: "center",
+    marginBottom: 14,
+    marginTop: 4,
+  },
+  gridAvatar: { 
+    width: 110, 
+    height: 110, 
+    borderRadius: 55, 
+    borderWidth: 4,
+    borderColor: "#0984e3",
+    backgroundColor: "#f0f4f8",
+    shadowColor: "#0984e3",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
   },
   placeholder: { 
     backgroundColor: "#e3f2fd",
-    borderWidth: 3,
-    borderColor: "#b3d9ff",
+    borderWidth: 4,
+    borderColor: "#0984e3",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#0984e3",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  info: { flex: 1, justifyContent: "center" },
-  name: { fontSize: 18, fontWeight: "bold", color: "#2d3436" },
-  position: { fontSize: 14, color: "#636e72", marginVertical: 2 },
-  club: { fontSize: 14, fontWeight: "600", color: "#0984e3" },
-  details: { fontSize: 12, color: "#636e72", marginTop: 4 },
-  contact: { fontSize: 12, color: "#636e72", marginTop: 4 },
+  gridInfo: { 
+    alignItems: "center",
+    width: "100%",
+  },
+  gridName: { 
+    fontSize: 17, 
+    fontWeight: "bold", 
+    color: "#2d3436",
+    marginBottom: 6,
+    marginTop: 4,
+    textAlign: "center",
+    letterSpacing: 0.2,
+  },
+  gridPosition: { 
+    fontSize: 13, 
+    color: "#636e72", 
+    marginBottom: 8,
+    textAlign: "center",
+    fontWeight: "500",
+  },
+  gridClub: { 
+    fontSize: 14, 
+    fontWeight: "700", 
+    color: "#0984e3",
+    marginBottom: 12,
+    textAlign: "center",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  gridStats: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "100%",
+    paddingTop: 12,
+    marginTop: 8,
+    borderTopWidth: 1.5,
+    borderTopColor: "#e8f4fd",
+  },
+  statItem: {
+    alignItems: "center",
+    flex: 1,
+    paddingVertical: 4,
+  },
+  statLabel: {
+    fontSize: 18,
+    marginBottom: 4,
+  },
+  statValue: {
+    fontSize: 11,
+    color: "#2d3436",
+    fontWeight: "600",
+    letterSpacing: 0.3,
+  },
 
   // Modal
   modalOverlay: {
@@ -570,6 +705,21 @@ const styles = StyleSheet.create({
     marginTop: 15,
     marginBottom: 8,
     color: "#0984e3",
+  },
+  investmentPurposeContainer: {
+    backgroundColor: "#f0f4f8",
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 8,
+    marginBottom: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: "#0984e3",
+  },
+  investmentPurposeText: {
+    fontSize: 15,
+    color: "#2d3436",
+    lineHeight: 22,
+    fontWeight: "500",
   },
 
   // Buttons

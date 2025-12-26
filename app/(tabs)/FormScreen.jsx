@@ -1,6 +1,6 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as ImagePicker from "expo-image-picker";
-import { doc, getDoc, setDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, query, setDoc, where } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import React, { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -123,6 +123,7 @@ const PlayerForm = () => {
     jerseyNumber: "",
     upiLink: "",
     youtubeUrl: "",
+    investmentPurpose: "",
   });
 
   // Load existing player data and auto-populate email
@@ -203,6 +204,7 @@ const PlayerForm = () => {
             jerseyNumber: playerData.jerseyNumber || "",
             upiLink: playerData.upiLink || "",
             youtubeUrl: playerData.youtubeUrl || "",
+            investmentPurpose: playerData.investmentPurpose || "",
           });
         }
       } catch (error) {
@@ -499,6 +501,20 @@ const uploadFile = async (uri, path) => {
             onChangeText={(t) => setForm({ ...form, jerseyNumber: t })}
           />
 
+          <Text style={styles.label}>What do you need the investment for?</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="E.g., Training equipment, coaching fees, tournament fees, travel expenses, etc."
+            value={form.investmentPurpose}
+            onChangeText={(t) => setForm({ ...form, investmentPurpose: t })}
+            multiline={true}
+            numberOfLines={4}
+            textAlignVertical="top"
+          />
+          <Text style={styles.helpText}>
+            💰 Explain how you plan to use the investment to improve your career
+          </Text>
+
           <Text style={styles.label}>UPI Payment Link (for receiving investments)</Text>
           <TextInput
             style={[styles.input, upiError && styles.errorInput]}
@@ -622,6 +638,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 1,
+  },
+  textArea: {
+    minHeight: 100,
+    paddingTop: 14,
+    paddingBottom: 14,
   },
   readOnlyInput: {
     backgroundColor: "#e9ecef",
