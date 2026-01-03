@@ -81,7 +81,20 @@ const MyInvestmentsScreen = () => {
           contentContainerStyle={styles.list}
           renderItem={({ item }) => (
             <View style={styles.card}>
-              <Text style={styles.playerName}>🎯 {item.playerName}</Text>
+              <View style={styles.cardHeader}>
+                <Text style={styles.playerName}>🎯 {item.playerName}</Text>
+                <View style={styles.amountBadge}>
+                  <Text style={styles.amountBadgeText}>
+                    ₹{item.investmentAmount ? item.investmentAmount.toLocaleString() : "0"}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.amountSection}>
+                <Text style={styles.amountLabel}>Investment Amount</Text>
+                <Text style={styles.amountValue}>
+                  ₹{item.investmentAmount ? item.investmentAmount.toLocaleString() : "0"}
+                </Text>
+              </View>
               <Text style={styles.detail}>
                 ⏳ Invested on: {item.investedAt?.toDate().toDateString() || "-"}
               </Text>
@@ -138,7 +151,55 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#e8f4fd",
   },
-  playerName: { fontSize: 20, fontWeight: "bold", color: "#1a1a1a", marginBottom: 4 },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  playerName: { 
+    fontSize: 20, 
+    fontWeight: "bold", 
+    color: "#1a1a1a", 
+    flex: 1,
+  },
+  amountBadge: {
+    backgroundColor: "#00b894",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    shadowColor: "#00b894",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  amountBadgeText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#ffffff",
+  },
+  amountSection: {
+    backgroundColor: "#f0f9ff",
+    borderRadius: 12,
+    padding: 16,
+    marginVertical: 12,
+    borderWidth: 2,
+    borderColor: "#0ea5e9",
+  },
+  amountLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#64748b",
+    marginBottom: 6,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  amountValue: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#0ea5e9",
+  },
   detail: { fontSize: 15, color: "#636e72", marginTop: 6 },
 });
 

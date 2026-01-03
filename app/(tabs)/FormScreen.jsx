@@ -1,4 +1,3 @@
-import DateTimePicker from "@react-native-community/datetimepicker";
 import * as ImagePicker from "expo-image-picker";
 import { collection, doc, getDoc, getDocs, query, setDoc, where } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
@@ -17,6 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { Calendar } from "react-native-calendars";
 import { auth, db, storage } from "../../config/firebase";
 
 // Dropdown data
@@ -103,6 +103,9 @@ const PlayerForm = () => {
   const [upiError, setUpiError] = useState(false);
   const [youtubeError, setYoutubeError] = useState(false);
   const [playerDocId, setPlayerDocId] = useState(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [form, setForm] = useState({
     fullName: "",
     dob: new Date(),
@@ -371,15 +374,107 @@ const uploadFile = async (uri, path) => {
           />
 
           <Text style={styles.label}>Date of Birth</Text>
-          <DateTimePicker
-            value={form.dob}
-            mode="date"
-            onChange={(e, date) => {
-              if (date) {
-                setForm({ ...form, dob: date });
-              }
+          <TouchableOpacity
+            style={styles.input}
+            onPress={() => {
+              setSelectedYear(form.dob.getFullYear());
+              setShowCalendar(true);
             }}
-          />
+          >
+            <Text style={styles.dateDisplayText}>
+              {form.dob.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </Text>
+          </TouchableOpacity>
+
+          <Modal
+            visible={showCalendar}
+            transparent={true}
+            animationType="slide"
+            onRequestClose={() => setShowCalendar(false)}
+          >
+            <TouchableOpacity
+              style={styles.calendarModalOverlay}
+              activeOpacity={1}
+              onPress={() => setShowCalendar(false)}
+            >
+              <View style={styles.calendarContainer} onStartShouldSetResponder={() => true}>
+                <View style={styles.calendarHeader}>
+                  <Text style={styles.calendarTitle}>Select Date of Birth</Text>
+                  <TouchableOpacity
+                    onPress={() => setShowCalendar(false)}
+                    style={styles.calendarCloseButton}
+                  >
+                    <Text style={styles.calendarCloseText}>✕</Text>
+                  </TouchableOpacity>
+                </View>
+                
+                {/* Year Selector */}
+                <View style={styles.yearSelectorContainer}>
+                  <Text style={styles.yearLabel}>Year:</Text>
+                  <CustomDropdown
+                    options={Array.from({ length: new Date().getFullYear() - 1949 }, (_, i) => 
+                      String(new Date().getFullYear() - i)
+                    )}
+                    selectedValue={String(selectedYear)}
+                    onSelect={(value) => {
+                      const newYear = parseInt(value);
+                      setSelectedYear(newYear);
+                      // Update calendar to show the selected year
+                      const currentDate = form.dob;
+                      const newDate = new Date(newYear, currentDate.getMonth(), currentDate.getDate());
+                      // Ensure date is valid (e.g., Feb 29 in non-leap year)
+                      if (newDate.getDate() !== currentDate.getDate()) {
+                        newDate.setDate(0); // Go to last day of previous month
+                      }
+                      setForm({ ...form, dob: newDate });
+                    }}
+                    placeholder="Select Year"
+                    style={{ flex: 1, marginLeft: 10 }}
+                  />
+                </View>
+
+                <Calendar
+                  key={`${selectedYear}-${form.dob.getMonth()}`}
+                  current={new Date(selectedYear, form.dob.getMonth(), 1).toISOString().split('T')[0]}
+                  onDayPress={(day) => {
+                    setForm({ ...form, dob: new Date(day.dateString) });
+                    setShowCalendar(false);
+                  }}
+                  markedDates={{
+                    [form.dob.toISOString().split('T')[0]]: {
+                      selected: true,
+                      selectedColor: '#0984e3',
+                    },
+                  }}
+                  maxDate={new Date().toISOString().split('T')[0]}
+                  theme={{
+                    backgroundColor: '#ffffff',
+                    calendarBackground: '#ffffff',
+                    textSectionTitleColor: '#636e72',
+                    selectedDayBackgroundColor: '#0984e3',
+                    selectedDayTextColor: '#ffffff',
+                    todayTextColor: '#0984e3',
+                    dayTextColor: '#2d3436',
+                    textDisabledColor: '#d5d5d5',
+                    dotColor: '#0984e3',
+                    selectedDotColor: '#ffffff',
+                    arrowColor: '#0984e3',
+                    monthTextColor: '#2d3436',
+                    textDayFontWeight: '500',
+                    textMonthFontWeight: 'bold',
+                    textDayHeaderFontWeight: '600',
+                    textDayFontSize: 16,
+                    textMonthFontSize: 18,
+                    textDayHeaderFontSize: 14,
+                  }}
+                />
+              </View>
+            </TouchableOpacity>
+          </Modal>
 
           <CustomDropdown
             options={NATIONALITY_OPTIONS}
@@ -389,9 +484,10 @@ const uploadFile = async (uri, path) => {
             style={{ marginBottom: 12 }}
           />
 
+          <Text style={styles.label}>City & State</Text>
           <TextInput
             style={styles.input}
-            placeholder="City & State"
+            placeholder="Enter your City & State"
             value={form.city}
             onChangeText={(t) => setForm({ ...form, city: t })}
           />
@@ -654,6 +750,10 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     color: "#2d3436",
   },
+  dateDisplayText: {
+    fontSize: 16,
+    color: "#2d3436",
+  },
   helpText: {
     fontSize: Platform.OS === 'web' ? 12 : 11,
     color: "#636e72",
@@ -796,6 +896,67 @@ const styles = StyleSheet.create({
   selectedDropdownItemText: {
     color: '#1976d2',
     fontWeight: '600',
+  },
+  calendarModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  calendarContainer: {
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 20,
+    width: Platform.OS === 'web' ? 400 : '90%',
+    maxWidth: 400,
+    shadowColor: '#0984e3',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: '#e8f4fd',
+  },
+  calendarHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  calendarTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2d3436',
+  },
+  calendarCloseButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  calendarCloseText: {
+    fontSize: 18,
+    color: '#636e72',
+    fontWeight: 'bold',
+  },
+  yearSelectorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  yearLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2d3436',
+    minWidth: 50,
   },
 });
 

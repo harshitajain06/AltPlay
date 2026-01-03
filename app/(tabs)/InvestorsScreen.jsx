@@ -50,7 +50,7 @@ export default function PlayerInvestorsScreen() {
               ...investorSnap.data(),
               investmentId: docSnap.id,
               investedAt: data.investedAt,
-              amount: data.amount || "N/A", // default if not stored
+              investmentAmount: data.investmentAmount || 0, // Use investmentAmount field
             });
           }
         }
@@ -96,9 +96,21 @@ export default function PlayerInvestorsScreen() {
         contentContainerStyle={styles.list}
         renderItem={({ item }) => (
           <View style={styles.investorCard}>
-            <Text style={styles.name}>👤 {item.name || "Unnamed Investor"}</Text>
+            <View style={styles.cardHeader}>
+              <Text style={styles.name}>👤 {item.name || "Unnamed Investor"}</Text>
+              <View style={styles.amountBadge}>
+                <Text style={styles.amountBadgeText}>
+                  ₹{item.investmentAmount ? item.investmentAmount.toLocaleString() : "0"}
+                </Text>
+              </View>
+            </View>
             <Text style={styles.details}>📧 {item.email}</Text>
-            <Text style={styles.details}>💰 Invested Amount: ₹{item.amount}</Text>
+            <View style={styles.amountSection}>
+              <Text style={styles.amountLabel}>Investment Amount</Text>
+              <Text style={styles.amountValue}>
+                ₹{item.investmentAmount ? item.investmentAmount.toLocaleString() : "0"}
+              </Text>
+            </View>
             <Text style={styles.details}>
               ⏳ Invested on: {item.investedAt?.toDate().toDateString() || "Unknown Date"}
             </Text>
@@ -134,7 +146,55 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#e8f4fd",
   },
-  name: { fontSize: 18, fontWeight: "bold", color: "#2d3436", marginBottom: 8 },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  name: { 
+    fontSize: 18, 
+    fontWeight: "bold", 
+    color: "#2d3436", 
+    flex: 1,
+  },
+  amountBadge: {
+    backgroundColor: "#00b894",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    shadowColor: "#00b894",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  amountBadgeText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#ffffff",
+  },
+  amountSection: {
+    backgroundColor: "#f0f9ff",
+    borderRadius: 12,
+    padding: 16,
+    marginVertical: 12,
+    borderWidth: 2,
+    borderColor: "#0ea5e9",
+  },
+  amountLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#64748b",
+    marginBottom: 6,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  amountValue: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#0ea5e9",
+  },
   details: { fontSize: 14, color: "#636e72", marginTop: 4 },
   center: { 
     flex: 1, 

@@ -101,14 +101,31 @@ const AdminScreen = () => {
           <Text style={styles.investmentIcon}>💰</Text>
           <Text style={styles.investmentTitle}>Investment</Text>
         </View>
-        <View style={styles.investmentDateContainer}>
-          <Text style={styles.investmentDate}>
-            {item.investedAt?.toDate()?.toLocaleDateString() || "Unknown Date"}
-          </Text>
+        <View style={styles.investmentHeaderRight}>
+          <View style={styles.investmentAmountBadge}>
+            <Text style={styles.investmentAmountText}>
+              ₹{item.investmentAmount ? item.investmentAmount.toLocaleString() : "0"}
+            </Text>
+          </View>
+          <View style={styles.investmentDateContainer}>
+            <Text style={styles.investmentDate}>
+              {item.investedAt?.toDate()?.toLocaleDateString() || "Unknown Date"}
+            </Text>
+          </View>
         </View>
       </View>
       
       <View style={styles.investmentContent}>
+        {/* Investment Amount Section */}
+        <View style={styles.amountSection}>
+          <View style={styles.amountContainer}>
+            <Text style={styles.amountLabel}>Investment Amount</Text>
+            <Text style={styles.amountValue}>
+              ₹{item.investmentAmount ? item.investmentAmount.toLocaleString() : "0"}
+            </Text>
+          </View>
+        </View>
+
         {/* Investor Section */}
         <View style={styles.investorSection}>
           <View style={styles.sectionHeader}>
@@ -292,6 +309,12 @@ const AdminScreen = () => {
                 <View style={styles.statCard}>
                   <Text style={styles.statNumber}>{investments.length}</Text>
                   <Text style={styles.statLabel}>Total Investments</Text>
+                </View>
+                <View style={styles.statCard}>
+                  <Text style={styles.statNumber}>
+                    ₹{investments.reduce((sum, inv) => sum + (inv.investmentAmount || 0), 0).toLocaleString()}
+                  </Text>
+                  <Text style={styles.statLabel}>Total Amount</Text>
                 </View>
                 <View style={styles.statCard}>
                   <Text style={styles.statNumber}>
@@ -563,6 +586,26 @@ const styles = StyleSheet.create({
     backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     backgroundColor: '#667eea',
   },
+  investmentHeaderRight: {
+    alignItems: 'flex-end',
+    gap: 8,
+  },
+  investmentAmountBadge: {
+    backgroundColor: '#00b894',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  investmentAmountText: {
+    fontSize: Platform.OS === 'web' ? 18 : 16,
+    fontWeight: 'bold',
+    color: '#ffffff',
+  },
   investmentTitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -589,6 +632,33 @@ const styles = StyleSheet.create({
   },
   investmentContent: {
     padding: 20,
+  },
+  amountSection: {
+    marginBottom: 20,
+    paddingBottom: 20,
+    borderBottomWidth: 2,
+    borderBottomColor: '#e2e8f0',
+  },
+  amountContainer: {
+    backgroundColor: '#f0f9ff',
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#0ea5e9',
+  },
+  amountLabel: {
+    fontSize: Platform.OS === 'web' ? 14 : 12,
+    fontWeight: '600',
+    color: '#64748b',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  amountValue: {
+    fontSize: Platform.OS === 'web' ? 32 : 28,
+    fontWeight: 'bold',
+    color: '#0ea5e9',
   },
   investorSection: {
     marginBottom: 20,
@@ -697,6 +767,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     marginBottom: 20,
     paddingHorizontal: 10,
+    flexWrap: 'wrap',
   },
   statCard: {
     backgroundColor: '#ffffff',
@@ -704,7 +775,9 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
     flex: 1,
+    minWidth: Platform.OS === 'web' ? 180 : 140,
     marginHorizontal: 6,
+    marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,

@@ -1,30 +1,28 @@
 // src/navigation/StackLayout.jsx
 
-import React, { useEffect, useState } from "react";
-import { createStackNavigator } from "@react-navigation/stack";
+import { Ionicons } from "@expo/vector-icons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import { useNavigation } from "@react-navigation/native";
-import { Ionicons } from "@expo/vector-icons";
-import { View, ActivityIndicator, Alert, Platform } from "react-native";
-import { signOut, onAuthStateChanged } from "firebase/auth";
-import { getFirestore, doc, getDoc } from "firebase/firestore";
+import { createStackNavigator } from "@react-navigation/stack";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { doc, getDoc, getFirestore } from "firebase/firestore";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, Alert, Platform, View } from "react-native";
 
 import AboutScreen from "./AboutScreen";
-import ChatScreen from "./ChatScreen";
 import AdminScreen from "./AdminScreen";
 import FormScreen from "./FormScreen";
 import InvestmentScreen from "./InvestmentScreen";
 import InvestorScreen from "./InvestorsScreen";
-import PlayerScreen from "./PlayerScreen";
-import ProfileScreen from "./ProfileScreen";
-import PerformanceInsightsScreen from "./PerformanceInsightsScreen";
 import PerformanceGraphScreen from "./PerformanceGraphScreen";
+import PerformanceInsightsScreen from "./PerformanceInsightsScreen";
+import PlayerScreen from "./PlayerScreen";
 import LoginRegister from "./index";
 
+import { auth } from "../../config/firebase";
 import { Colors } from "../../constants/Colors";
 import { useColorScheme } from "../../hooks/useColorScheme";
-import { auth } from "../../config/firebase";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -197,8 +195,8 @@ const DrawerNavigator = ({ role }) => {
         options={{ title: "Home" }}
       />
 
-      {/* ✅ PlayerForm accessible via drawer - hidden for investors */}
-      {role !== "investor" && (
+      {/* ✅ PlayerForm accessible via drawer - only for players */}
+      {role === "player" && (
         <Drawer.Screen
           name="PlayerForm"
           component={FormScreen}

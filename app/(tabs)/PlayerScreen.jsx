@@ -22,6 +22,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -46,6 +47,10 @@ const PlayerScreen = () => {
   const [userProfile, setUserProfile] = useState(null);
   const [profileModalVisible, setProfileModalVisible] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(false);
+  const [investmentAmountModalVisible, setInvestmentAmountModalVisible] = useState(false);
+  const [confirmationModalVisible, setConfirmationModalVisible] = useState(false);
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const [investmentAmount, setInvestmentAmount] = useState("");
 
   useEffect(() => {
     const fetchPlayers = async () => {
@@ -166,28 +171,53 @@ const PlayerScreen = () => {
     }
   };
 
-  const handleInvest = async () => {
+  const handleInvestClick = () => {
+    if (hasInvested) return; // safeguard
+    setInvestmentAmount("");
+    setInvestmentAmountModalVisible(true);
+  };
+
+  const handleAmountSubmit = () => {
+    const amount = parseFloat(investmentAmount);
+    if (!investmentAmount || isNaN(amount) || amount <= 0) {
+      alert("Please enter a valid investment amount.");
+      return;
+    }
+    setInvestmentAmountModalVisible(false);
+    setConfirmationModalVisible(true);
+  };
+
+  const handleConfirmInvestment = async () => {
     try {
       const user = auth.currentUser;
       if (!user) {
         alert("Please log in to invest.");
+        setConfirmationModalVisible(false);
         return;
       }
 
-      if (hasInvested) return; // safeguard
+      if (hasInvested) {
+        setConfirmationModalVisible(false);
+        return; // safeguard
+      }
+
+      const amount = parseFloat(investmentAmount);
 
       await addDoc(collection(db, "investments"), {
         investorId: user.uid,
         playerId: selectedPlayer.id,
         playerName: selectedPlayer.fullName,
+        investmentAmount: amount,
         investedAt: serverTimestamp(),
       });
 
       setHasInvested(true);
-      alert(`✅ You invested in ${selectedPlayer.fullName}`);
+      setConfirmationModalVisible(false);
+      setSuccessModalVisible(true);
     } catch (err) {
       console.error("Investment error:", err);
       alert("❌ Failed to invest. Try again.");
+      setConfirmationModalVisible(false);
     }
   };
 
@@ -411,7 +441,7 @@ const PlayerScreen = () => {
                   styles.investButton,
                   hasInvested && styles.disabledButton,
                 ]}
-                onPress={handleInvest}
+                onPress={handleInvestClick}
                 disabled={hasInvested}
               >
                 <Text style={styles.investButtonText}>
@@ -474,6 +504,113 @@ const PlayerScreen = () => {
               onPress={() => setProfileModalVisible(false)}
             >
               <Text style={styles.profileCloseButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {/* Investment Amount Modal */}
+      {investmentAmountModalVisible && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.amountModalBox}>
+            <Text style={styles.amountModalTitle}>Enter Investment Amount</Text>
+            <Text style={styles.amountModalSubtitle}>
+              How much would you like to invest in {selectedPlayer?.fullName}?
+            </Text>
+            <TextInput
+              style={styles.amountInput}
+              placeholder="Enter amount (₹)"
+              placeholderTextColor="#95a5a6"
+              keyboardType="numeric"
+              value={investmentAmount}
+              onChangeText={setInvestmentAmount}
+              autoFocus={true}
+            />
+            <View style={styles.amountModalButtons}>
+              <TouchableOpacity
+                style={[styles.amountModalButton, styles.cancelAmountButton]}
+                onPress={() => setInvestmentAmountModalVisible(false)}
+              >
+                <Text style={styles.amountModalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.amountModalButton, styles.submitAmountButton]}
+                onPress={handleAmountSubmit}
+              >
+                <Text style={styles.amountModalButtonText}>Continue</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* Confirmation Modal */}
+      {confirmationModalVisible && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.confirmationModalBox}>
+            <Text style={styles.confirmationModalTitle}>Confirm Investment</Text>
+            <View style={styles.confirmationDetails}>
+              <Text style={styles.confirmationLabel}>Player:</Text>
+              <Text style={styles.confirmationValue}>{selectedPlayer?.fullName}</Text>
+              
+              <Text style={styles.confirmationLabel}>Investment Amount:</Text>
+              <Text style={styles.confirmationAmount}>
+                ₹{parseFloat(investmentAmount || 0).toLocaleString()}
+              </Text>
+            </View>
+            <Text style={styles.confirmationMessage}>
+              Are you sure you want to proceed with this investment?
+            </Text>
+            <View style={styles.confirmationModalButtons}>
+              <TouchableOpacity
+                style={[styles.confirmationModalButton, styles.cancelConfirmationButton]}
+                onPress={() => {
+                  setConfirmationModalVisible(false);
+                  setInvestmentAmount("");
+                }}
+              >
+                <Text style={styles.confirmationModalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.confirmationModalButton, styles.confirmButton]}
+                onPress={handleConfirmInvestment}
+              >
+                <Text style={styles.confirmationModalButtonText}>Confirm</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* Success Modal */}
+      {successModalVisible && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.successModalBox}>
+            <View style={styles.successIconContainer}>
+              <Text style={styles.successIcon}>✅</Text>
+            </View>
+            <Text style={styles.successModalTitle}>Investment Successful!</Text>
+            <View style={styles.successDetails}>
+              <Text style={styles.successLabel}>Player:</Text>
+              <Text style={styles.successValue}>{selectedPlayer?.fullName}</Text>
+              
+              <Text style={styles.successLabel}>Investment Amount:</Text>
+              <Text style={styles.successAmount}>
+                ₹{parseFloat(investmentAmount || 0).toLocaleString()}
+              </Text>
+            </View>
+            <Text style={styles.successMessage}>
+              Your investment has been successfully recorded!
+            </Text>
+            <TouchableOpacity
+              style={styles.successButton}
+              onPress={() => {
+                setSuccessModalVisible(false);
+                setModalVisible(false);
+                setInvestmentAmount("");
+              }}
+            >
+              <Text style={styles.successButtonText}>Done</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -901,6 +1038,222 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     fontSize: 16,
+  },
+  
+  // Investment Amount Modal Styles
+  amountModalBox: {
+    width: "100%",
+    maxWidth: 400,
+    backgroundColor: "#fff",
+    borderRadius: 24,
+    padding: 32,
+    shadowColor: "#0984e3",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+    borderWidth: 1,
+    borderColor: "#e8f4fd",
+  },
+  amountModalTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#2d3436",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  amountModalSubtitle: {
+    fontSize: 16,
+    color: "#636e72",
+    marginBottom: 24,
+    textAlign: "center",
+  },
+  amountInput: {
+    borderWidth: 2,
+    borderColor: "#0984e3",
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 18,
+    color: "#2d3436",
+    backgroundColor: "#f0f4f8",
+    marginBottom: 24,
+    textAlign: "center",
+    fontWeight: "600",
+  },
+  amountModalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  amountModalButton: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  cancelAmountButton: {
+    backgroundColor: "#d63031",
+  },
+  submitAmountButton: {
+    backgroundColor: "#0984e3",
+  },
+  amountModalButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  
+  // Confirmation Modal Styles
+  confirmationModalBox: {
+    width: "100%",
+    maxWidth: 400,
+    backgroundColor: "#fff",
+    borderRadius: 24,
+    padding: 32,
+    shadowColor: "#0984e3",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+    borderWidth: 1,
+    borderColor: "#e8f4fd",
+  },
+  confirmationModalTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#2d3436",
+    marginBottom: 24,
+    textAlign: "center",
+  },
+  confirmationDetails: {
+    backgroundColor: "#f0f4f8",
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 24,
+  },
+  confirmationLabel: {
+    fontSize: 14,
+    color: "#636e72",
+    marginBottom: 4,
+    fontWeight: "500",
+  },
+  confirmationValue: {
+    fontSize: 18,
+    color: "#2d3436",
+    marginBottom: 16,
+    fontWeight: "600",
+  },
+  confirmationAmount: {
+    fontSize: 28,
+    color: "#0984e3",
+    fontWeight: "bold",
+  },
+  confirmationMessage: {
+    fontSize: 16,
+    color: "#636e72",
+    textAlign: "center",
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  confirmationModalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  confirmationModalButton: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  cancelConfirmationButton: {
+    backgroundColor: "#d63031",
+  },
+  confirmButton: {
+    backgroundColor: "#00b894",
+  },
+  confirmationModalButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  
+  // Success Modal Styles
+  successModalBox: {
+    width: "100%",
+    maxWidth: 400,
+    backgroundColor: "#fff",
+    borderRadius: 24,
+    padding: 32,
+    shadowColor: "#00b894",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+    borderWidth: 1,
+    borderColor: "#e8f4fd",
+    alignItems: "center",
+  },
+  successIconContainer: {
+    marginBottom: 20,
+  },
+  successIcon: {
+    fontSize: 64,
+  },
+  successModalTitle: {
+    fontSize: 26,
+    fontWeight: "bold",
+    color: "#00b894",
+    marginBottom: 24,
+    textAlign: "center",
+  },
+  successDetails: {
+    backgroundColor: "#f0f4f8",
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 24,
+    width: "100%",
+  },
+  successLabel: {
+    fontSize: 14,
+    color: "#636e72",
+    marginBottom: 4,
+    fontWeight: "500",
+  },
+  successValue: {
+    fontSize: 18,
+    color: "#2d3436",
+    marginBottom: 16,
+    fontWeight: "600",
+  },
+  successAmount: {
+    fontSize: 28,
+    color: "#00b894",
+    fontWeight: "bold",
+  },
+  successMessage: {
+    fontSize: 16,
+    color: "#636e72",
+    textAlign: "center",
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  successButton: {
+    width: "100%",
+    backgroundColor: "#00b894",
+    padding: 16,
+    borderRadius: 12,
+    alignItems: "center",
+    shadowColor: "#00b894",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  successButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 18,
   },
 });
 

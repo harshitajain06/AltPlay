@@ -1,26 +1,25 @@
+import { Ionicons } from "@expo/vector-icons";
+import { useRoute } from "@react-navigation/native";
+import {
+  collection,
+  getDocs,
+  orderBy,
+  query,
+  where,
+} from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { useRoute } from "@react-navigation/native";
 import {
   ActivityIndicator,
   Dimensions,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import {
-  collection,
-  getDocs,
-  query,
-  where,
-  orderBy,
-} from "firebase/firestore";
+import { Circle, G, Line, Polyline, Svg, Text as SvgText } from "react-native-svg";
 import { auth, db } from "../../config/firebase";
-import { Svg, Polyline, Line, Circle, Text as SvgText, G } from "react-native-svg";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const CHART_WIDTH = SCREEN_WIDTH - 80;
